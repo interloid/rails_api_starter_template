@@ -45,6 +45,25 @@ group :development, :test do
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
   gem "brakeman", require: false
 
-  # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
+  # Detect N+1 queries and unused eager loading [https://github.com/flyerhzm/bullet]
+  gem "bullet"
+end
+
+group :development do
+  # Detect unreachable and unused routes [https://github.com/amatsuda/traceroute]
+  gem "traceroute", require: false
+
+  # Static analysis code quality report [https://github.com/whitesmith/rubycritic]
+  gem "rubycritic", require: false
+
+  # Git hooks manager [https://github.com/evilmartians/lefthook]
+  gem "lefthook", require: false
+end
+
+# Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
+group :rubocop do
   gem "rubocop-rails-omakase", require: false
+  gem "rubocop-rspec", require: false
+  gem "rubocop-performance", require: false
+  gem "rubocop-minitest", require: false
 end
