@@ -40,6 +40,38 @@ Rails.application.configure do
   # Prevent health checks from clogging up the logs.
   config.silence_healthcheck_path = "/up"
 
+  # Emit structured JSON request logs (backend-agnostic, no New Relic coupling).
+  config.lograge.enabled = true
+  config.lograge.formatter = Lograge::Formatters::Json.new
+  # CRITICAL for API-only: controllers inherit ActionController::API, not ::Base;
+  # without this, lograge silently logs nothing.
+  config.lograge.base_controller_class = "ActionController::API"
+
+  # lograge already emits: method, path, format, controller, action, status,
+  # duration, db, view. custom_options ADDS to that — do not duplicate those.
+  config.lograge.custom_options = lambda do |event|
+    payload = event.payload
+    data = {
+      time:           Time.now.utc.iso8601,
+      service:        ENV.fetch("SERVICE_NAME", "backend_starter"),
+      env:            Rails.env,
+      correlation_id: payload[:correlation_id],
+      request_id:     payload[:request_id],
+      remote_ip:      payload[:remote_ip],
+      user_agent:     payload[:user_agent],
+      host:           payload[:host],
+      user_id:        payload[:user_id]
+    }
+    if (exception = payload[:exception])
+      data[:exception]         = exception.first
+      data[:exception_message] = exception.last
+    end
+    # Opt-in filtered params (redacted via Rails' filter_parameters). Leave OFF
+    # by default; uncomment if you need request bodies in logs:
+    # data[:params] = event.payload[:params]&.except("controller", "action")
+    data
+  end
+
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
 

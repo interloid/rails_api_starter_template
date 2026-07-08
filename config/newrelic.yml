@@ -1,0 +1,32 @@
+common: &default_settings
+  license_key: <%= ENV["NEW_RELIC_LICENSE_KEY"] %>
+  # Isolate non-production data into its own app entry so local/staging testing
+  # never pollutes the production dashboard.
+  app_name: <%= ENV.fetch("NEW_RELIC_APP_NAME", "rails_starter_template") + (Rails.env.production? ? "" : "-#{Rails.env}") %>
+  # Agent LOADS only when a license key exists (keeps the app inert without a key).
+  agent_enabled: <%= ENV["NEW_RELIC_LICENSE_KEY"].to_s.strip != "" %>
+  distributed_tracing:
+    enabled: true
+  # Keep APM/metrics, but DO NOT forward logs to New Relic (ingest-cost control).
+  application_logging:
+    enabled: true
+    forwarding:
+      enabled: false
+    local_decorating:
+      enabled: false
+
+development:
+  <<: *default_settings
+  # OFF by default. Set NEW_RELIC_MONITOR_MODE=true (AND have a license key) to
+  # send data from your machine while testing the integration locally.
+  monitor_mode: <%= ENV["NEW_RELIC_MONITOR_MODE"].to_s.strip == "true" %>
+
+test:
+  <<: *default_settings
+  # Always OFF in test — CI must never report to New Relic.
+  monitor_mode: false
+
+production:
+  <<: *default_settings
+  # Always ON in production, regardless of the dev toggle.
+  monitor_mode: true

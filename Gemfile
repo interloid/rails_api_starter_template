@@ -6,6 +6,10 @@ gem "rails", "~> 8.1.3"
 gem "pg", "~> 1.1"
 # Typed, validated configuration over credentials + ENV
 gem "anyway_config", "~> 2.0"
+# Structured JSON request logging to stdout
+gem "lograge"
+# Application performance monitoring (inert unless NEW_RELIC_LICENSE_KEY is set)
+gem "newrelic_rpm"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
@@ -49,6 +53,9 @@ group :development, :test do
 
   # Detect N+1 queries and unused eager loading [https://github.com/flyerhzm/bullet]
   gem "bullet"
+
+  # Auto-load machine-local env vars from .env* files (dev/test only, never prod)
+  gem "dotenv-rails"
 end
 
 group :development do
