@@ -5,8 +5,9 @@ Rails.application.routes.draw do
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
 
-  # Dependency-aware health check (verifies database + cache, returns 503 if DB down).
-  get "/health", to: "health#show"
+  # Dependency-aware health checks (detailed diagnostics + readiness probe).
+  get "/health",       to: "health#show"
+  get "/health/ready", to: "health#ready"
 
   # Defines the root path route ("/")
   # root "posts#index"
