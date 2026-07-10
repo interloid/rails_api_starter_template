@@ -4,6 +4,12 @@ source "https://rubygems.org"
 gem "rails", "~> 8.1.3"
 # Use postgresql as the database for Active Record
 gem "pg", "~> 1.1"
+# Typed, validated configuration over credentials + ENV
+gem "anyway_config", "~> 2.0"
+# Structured JSON request logging to stdout
+gem "lograge"
+# Application performance monitoring (inert unless NEW_RELIC_LICENSE_KEY is set)
+gem "newrelic_rpm"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
@@ -45,6 +51,28 @@ group :development, :test do
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
   gem "brakeman", require: false
 
-  # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
+  # Detect N+1 queries and unused eager loading [https://github.com/flyerhzm/bullet]
+  gem "bullet"
+
+  # Auto-load machine-local env vars from .env* files (dev/test only, never prod)
+  gem "dotenv-rails"
+end
+
+group :development do
+  # Detect unreachable and unused routes [https://github.com/amatsuda/traceroute]
+  gem "traceroute", require: false
+
+  # Static analysis code quality report [https://github.com/whitesmith/rubycritic]
+  gem "rubycritic", require: false
+
+  # Git hooks manager [https://github.com/evilmartians/lefthook]
+  gem "lefthook", require: false
+end
+
+# Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
+group :rubocop do
   gem "rubocop-rails-omakase", require: false
+  gem "rubocop-rspec", require: false
+  gem "rubocop-performance", require: false
+  gem "rubocop-minitest", require: false
 end
