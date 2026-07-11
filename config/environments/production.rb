@@ -22,10 +22,12 @@ Rails.application.configure do
   config.active_storage.service = :local
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
-  # config.assume_ssl = true
+  # Required so Rails trusts X-Forwarded-Proto behind a TLS-terminating load balancer.
+  config.assume_ssl = true
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  # config.force_ssl = true
+  # Owns HSTS + the HTTP->HTTPS redirect (secure_headers opts out of HSTS to avoid duplication).
+  config.force_ssl = true
 
   # Skip http-to-https redirect for the default health check endpoint.
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
@@ -108,12 +110,12 @@ Rails.application.configure do
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [ :id ]
 
-  # Enable DNS rebinding protection and other `Host` header attacks.
-  # config.hosts = [
-  #   "example.com",     # Allow requests from example.com
-  #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
-  # ]
-  #
-  # Skip DNS rebinding protection for the default health check endpoint.
-  # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  # Enable DNS rebinding protection and block Host-header injection.
+  # Comma-separated allowed hosts (e.g. "api.example.com,www.example.com").
+  allowed = ENV.fetch("ALLOWED_HOSTS", "").split(",").map(&:strip).reject(&:empty?)
+  config.hosts.concat(allowed) if allowed.any?
+  # Always allow health-check probes (load balancers hit these by IP/internal host):
+  config.host_authorization = {
+    exclude: ->(request) { request.path == "/up" || request.path.start_with?("/health") }
+  }
 end

@@ -1,7 +1,28 @@
+# CSRF protection is intentionally absent. ActionController::API does not include it
+# (it lives only in ActionController::Base), and CSRF is a cookie-session attack —
+# irrelevant to this stateless token API, where the credential is an Authorization
+# header that browsers never auto-attach cross-site. This is a deliberate decision.
 class ApplicationController < ActionController::API
+  # Global per-IP rate limit (defense-in-depth). Env-tunable; tighten per-controller
+  # for sensitive endpoints (auth gets a stricter limit in Section 8). /health and /up
+  # are exempt because HealthController inherits ActionController::API directly.
+  # NOTE: backed by Rails.cache — effective in production via Solid Cache (Section 9),
+  # works in dev with `bin/rails dev:cache`, and safely no-ops under the null store.
+  rate_limit to:     ENV.fetch("RATE_LIMIT_REQUESTS", 300).to_i,
+             within:  ENV.fetch("RATE_LIMIT_WITHIN_SECONDS", 60).to_i.seconds,
+             by:      -> { request.remote_ip },
+             with:    -> { render_rate_limited },
+             scope:   "global"
+
   before_action :set_correlation_id
 
   private
+
+  def render_rate_limited
+    render json: {
+      error: { code: "rate_limited", message: "Too many requests. Please retry later." }
+    }, status: :too_many_requests
+  end
 
   # Cross-service trace id: honor an inbound correlation/request id from an
   # upstream gateway or client; fall back to Rails' own per-request UUID.

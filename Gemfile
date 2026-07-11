@@ -10,6 +10,8 @@ gem "anyway_config", "~> 2.0"
 gem "lograge"
 # Application performance monitoring (inert unless NEW_RELIC_LICENSE_KEY is set)
 gem "newrelic_rpm"
+# Security response headers (Helmet equivalent)
+gem "secure_headers"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
@@ -39,7 +41,7 @@ gem "thruster", require: false
 gem "image_processing", "~> 1.2"
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
-# gem "rack-cors"
+gem "rack-cors"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
