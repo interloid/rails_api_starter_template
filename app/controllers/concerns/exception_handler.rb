@@ -6,6 +6,7 @@ module ExceptionHandler
     rescue_from ActiveRecord::RecordNotFound,       with: :handle_not_found
     rescue_from ActiveRecord::RecordInvalid,        with: :handle_record_invalid
     rescue_from ActionController::ParameterMissing, with: :handle_parameter_missing
+    rescue_from Pundit::NotAuthorizedError,         with: :handle_forbidden
   end
 
   private
@@ -24,6 +25,11 @@ module ExceptionHandler
   def handle_parameter_missing(exception)
     render_error(message: "Required parameter missing", error_code: "parameter_missing",
                  errors: [ { field: exception.param.to_s, message: "is required" } ], status: :bad_request)
+  end
+
+  def handle_forbidden(_exception)
+    render_error(message: "You are not authorized to perform this action",
+                 error_code: "forbidden", status: :forbidden)
   end
 
   def handle_internal_error(exception)

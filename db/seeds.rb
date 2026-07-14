@@ -13,7 +13,9 @@ admin = Role.find_or_create_by!(name: "admin") { |r| r.description = "Full syste
 member = Role.find_or_create_by!(name: "member") { |r| r.description = "Standard user access" }
 
 admin.permissions = permissions                                     # admin: everything
-member.permissions = Permission.where(resource: "users", action: "read")  # member: read users
+# member: read all users + write (edit) — record-level policy limits writes to their own
+# profile (see UserPolicy#update?). Needs users:write for the self-service edit flow.
+member.permissions = Permission.where(resource: "users", action: %w[read write])
 
 admin_user = User.find_or_initialize_by(email: "admin@example.com")
 admin_user.assign_attributes(password: "Password123!", first_name: "Admin", last_name: "User")

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_14_064808) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_14_071317) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -25,6 +25,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_14_064808) do
     t.datetime "updated_at", null: false
     t.index ["name"], name: "index_permissions_on_name", unique: true
     t.index ["resource", "action"], name: "index_permissions_on_resource_and_action"
+  end
+
+  create_table "refresh_tokens", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.uuid "family_id", null: false
+    t.string "ip_address"
+    t.datetime "revoked_at"
+    t.string "token_digest", null: false
+    t.datetime "updated_at", null: false
+    t.string "user_agent"
+    t.uuid "user_id", null: false
+    t.index ["family_id"], name: "index_refresh_tokens_on_family_id"
+    t.index ["token_digest"], name: "index_refresh_tokens_on_token_digest", unique: true
+    t.index ["user_id", "revoked_at"], name: "index_refresh_tokens_on_user_id_and_revoked_at"
+    t.index ["user_id"], name: "index_refresh_tokens_on_user_id"
   end
 
   create_table "role_permissions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -56,17 +72,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_14_064808) do
   end
 
   create_table "users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "confirmed_at"
     t.datetime "created_at", null: false
+    t.datetime "current_sign_in_at"
+    t.string "current_sign_in_ip"
     t.datetime "discarded_at"
     t.citext "email", null: false
+    t.integer "failed_attempts", default: 0, null: false
     t.string "first_name"
     t.string "last_name"
+    t.datetime "last_sign_in_at"
+    t.string "last_sign_in_ip"
+    t.datetime "locked_at"
     t.string "password_digest", null: false
+    t.integer "sign_in_count", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["discarded_at"], name: "index_users_on_discarded_at"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["locked_at"], name: "index_users_on_locked_at"
   end
 
+  add_foreign_key "refresh_tokens", "users"
   add_foreign_key "role_permissions", "permissions"
   add_foreign_key "role_permissions", "roles"
   add_foreign_key "user_roles", "roles"

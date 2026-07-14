@@ -49,6 +49,12 @@ gem "pagy"
 # Soft delete (discarded_at)
 gem "discard", "~> 1.4"
 
+# JSON Web Tokens for stateless access tokens
+gem "jwt"
+
+# Minimal authorization / RBAC policies
+gem "pundit"
+
 # OpenAPI/Swagger docs (rswag-specs — spec-driven generation — added in Section 13 with RSpec)
 gem "rswag-api"
 gem "rswag-ui"

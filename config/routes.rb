@@ -12,7 +12,18 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       get "status", to: "status#show"
-      resources :users, only: %i[index show]
+      resources :users, only: %i[index show update destroy]
+
+      post "auth/register", to: "auth#register"
+      post "auth/login",    to: "auth#login"
+      post "auth/refresh",  to: "auth#refresh"
+      post "auth/logout",   to: "auth#logout"
+      get  "auth/me",       to: "auth#me"
+
+      post "account/confirm_email",       to: "account#confirm_email"
+      post "account/resend_confirmation", to: "account#resend_confirmation"
+      post "account/forgot_password",     to: "account#forgot_password"
+      post "account/reset_password",      to: "account#reset_password"
     end
   end
 
