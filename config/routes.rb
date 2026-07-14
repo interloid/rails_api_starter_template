@@ -9,6 +9,22 @@ Rails.application.routes.draw do
   get "/health",       to: "health#show"
   get "/health/ready", to: "health#ready"
 
+  namespace :api do
+    namespace :v1 do
+      get "status", to: "status#show"
+    end
+  end
+
   # Defines the root path route ("/")
   # root "posts#index"
+
+  # Interactive API docs — DEVELOPMENT ONLY. Must be mounted BEFORE the catch-all
+  # below, or /api-docs would be swallowed by the "*unmatched" route.
+  if Rails.env.development?
+    mount Rswag::Ui::Engine => "/api-docs"
+    mount Rswag::Api::Engine => "/api-docs"
+  end
+
+  # Unknown endpoints return the JSON envelope, not Rails' HTML 404. Keep LAST.
+  match "*unmatched", to: "application#route_not_found", via: :all
 end

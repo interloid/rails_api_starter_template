@@ -3,6 +3,9 @@
 # irrelevant to this stateless token API, where the credential is an Authorization
 # header that browsers never auto-attach cross-site. This is a deliberate decision.
 class ApplicationController < ActionController::API
+  include Renderable
+  include ExceptionHandler
+
   # Global per-IP rate limit (defense-in-depth). Env-tunable; tighten per-controller
   # for sensitive endpoints (auth gets a stricter limit in Section 8). /health and /up
   # are exempt because HealthController inherits ActionController::API directly.
@@ -16,12 +19,18 @@ class ApplicationController < ActionController::API
 
   before_action :set_correlation_id
 
+  # Catch-all for unknown endpoints (wired as the last route). Public so the router
+  # can dispatch to it; returns the standard JSON error envelope, not Rails' HTML 404.
+  def route_not_found
+    render_error(message: "Endpoint not found", error_code: "not_found",
+                 errors: [ { message: "The requested endpoint does not exist" } ], status: :not_found)
+  end
+
   private
 
   def render_rate_limited
-    render json: {
-      error: { code: "rate_limited", message: "Too many requests. Please retry later." }
-    }, status: :too_many_requests
+    render_error(message: "Too many requests. Please retry later.",
+                 error_code: "rate_limited", status: :too_many_requests)
   end
 
   # Cross-service trace id: honor an inbound correlation/request id from an
