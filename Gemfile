@@ -77,6 +77,13 @@ group :development, :test do
 end
 
 group :development do
+  # Web dashboard for Solid Queue (jobs, workers, failed jobs), mounted at /jobs.
+  # Dev-only: it needs an asset pipeline (propshaft + importmap), which this API-only
+  # app otherwise omits — keeping it here keeps production lean. Prod gating: Section 14.
+  gem "mission_control-jobs"
+  gem "propshaft"
+  gem "importmap-rails"
+
   # Detect unreachable and unused routes [https://github.com/amatsuda/traceroute]
   gem "traceroute", require: false
 

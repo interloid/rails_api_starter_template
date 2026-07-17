@@ -81,8 +81,10 @@ Rails.application.configure do
   config.cache_store = :solid_cache_store
 
   # Replace the default in-process and non-durable queuing backend for Active Job.
+  # Single-DB topology (Section 9): do NOT set solid_queue.connects_to — with one
+  # database, Solid Queue uses the primary connection. Add connects_to only if you
+  # later split the queue onto its own database.
   config.active_job.queue_adapter = :solid_queue
-  config.solid_queue.connects_to = { database: { writing: :queue } }
 
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.

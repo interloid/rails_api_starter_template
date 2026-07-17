@@ -35,6 +35,8 @@ Rails.application.routes.draw do
   if Rails.env.development?
     mount Rswag::Ui::Engine => "/api-docs"
     mount Rswag::Api::Engine => "/api-docs"
+    # Solid Queue dashboard (jobs, workers, failed jobs). Production gating: Section 14.
+    mount MissionControl::Jobs::Engine, at: "/jobs"
   end
 
   # Unknown endpoints return the JSON envelope, not Rails' HTML 404. Keep LAST.
