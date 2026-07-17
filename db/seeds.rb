@@ -1,9 +1,30 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+# Permissions (resource:action convention)
+resources = %w[users roles permissions]
+actions = %w[read write delete]
+permissions = resources.flat_map do |resource|
+  actions.map do |action|
+    Permission.find_or_create_by!(resource: resource, action: action) do |p|
+      p.description = "#{action.capitalize} #{resource}"
+    end
+  end
+end
+
+admin = Role.find_or_create_by!(name: "admin") { |r| r.description = "Full system access" }
+member = Role.find_or_create_by!(name: "member") { |r| r.description = "Standard user access" }
+
+admin.permissions = permissions                                     # admin: everything
+# member: read all users + write (edit) — record-level policy limits writes to their own
+# profile (see UserPolicy#update?). Needs users:write for the self-service edit flow.
+member.permissions = Permission.where(resource: "users", action: %w[read write])
+
+admin_user = User.find_or_initialize_by(email: "admin@example.com")
+admin_user.assign_attributes(password: "Password123!", first_name: "Admin", last_name: "User")
+admin_user.save!
+admin_user.roles = [ admin ]
+
+member_user = User.find_or_initialize_by(email: "member@example.com")
+member_user.assign_attributes(password: "Password123!", first_name: "Member", last_name: "User")
+member_user.save!
+member_user.roles = [ member ]
+
+puts "Seeded: #{Permission.count} permissions, #{Role.count} roles, #{User.count} users"

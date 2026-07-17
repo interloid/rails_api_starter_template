@@ -10,13 +10,15 @@ gem "anyway_config", "~> 2.0"
 gem "lograge"
 # Application performance monitoring (inert unless NEW_RELIC_LICENSE_KEY is set)
 gem "newrelic_rpm"
+# Security response headers (Helmet equivalent)
+gem "secure_headers"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 # gem "jbuilder"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
-# gem "bcrypt", "~> 3.1.7"
+gem "bcrypt", "~> 3.1.7"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
@@ -39,7 +41,23 @@ gem "thruster", require: false
 gem "image_processing", "~> 1.2"
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
-# gem "rack-cors"
+gem "rack-cors"
+
+# Pagination
+gem "pagy"
+
+# Soft delete (discarded_at)
+gem "discard", "~> 1.4"
+
+# JSON Web Tokens for stateless access tokens
+gem "jwt"
+
+# Minimal authorization / RBAC policies
+gem "pundit"
+
+# OpenAPI/Swagger docs (rswag-specs — spec-driven generation — added in Section 13 with RSpec)
+gem "rswag-api"
+gem "rswag-ui"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
@@ -59,6 +77,13 @@ group :development, :test do
 end
 
 group :development do
+  # Web dashboard for Solid Queue (jobs, workers, failed jobs), mounted at /jobs.
+  # Dev-only: it needs an asset pipeline (propshaft + importmap), which this API-only
+  # app otherwise omits — keeping it here keeps production lean. Prod gating: Section 14.
+  gem "mission_control-jobs"
+  gem "propshaft"
+  gem "importmap-rails"
+
   # Detect unreachable and unused routes [https://github.com/amatsuda/traceroute]
   gem "traceroute", require: false
 

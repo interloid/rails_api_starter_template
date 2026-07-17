@@ -23,8 +23,10 @@ Rails.application.configure do
     config.action_controller.perform_caching = false
   end
 
-  # Change to :null_store to avoid any caching.
-  config.cache_store = :memory_store
+  # Solid Cache in development too, so dev matches prod and the Section 5 rate
+  # limiter is backed by the same durable (DB) store. Change to :null_store to
+  # avoid any caching.
+  config.cache_store = :solid_cache_store
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
@@ -78,4 +80,15 @@ Rails.application.configure do
     Bullet.rails_logger  = true
     Bullet.raise         = true
   end
+
+  # Mission Control – Jobs dashboard (mounted dev-only at /jobs). Two adjustments so
+  # its HTML UI works inside this API-only app:
+  #   1. Render under ActionController::Base, not our ActionController::API
+  #      ApplicationController (whose ExceptionHandler/rate_limit/lack of view+flash
+  #      support otherwise breaks the dashboard).
+  #   2. Skip HTTP Basic auth (on by default since v1.0) — unnecessary on localhost.
+  # (Set here, not in an initializer: the engine applies these in before_initialize,
+  # which runs before config/initializers.) Production gating comes in Section 14.
+  config.mission_control.jobs.base_controller_class = "ActionController::Base"
+  config.mission_control.jobs.http_basic_auth_enabled = false
 end

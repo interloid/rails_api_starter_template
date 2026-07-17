@@ -10,8 +10,8 @@ test:
 
 production:
   adapter: solid_cable
-  connects_to:
-    database:
-      writing: cable
+  # Single-DB topology (Section 9): no separate `cable` database, so no connects_to —
+  # Solid Cable uses the primary connection. (Action Cable is unused in this API-only
+  # app; if you adopt it, load solid_cable's schema into primary too.)
   polling_interval: 0.1.seconds
   message_retention: 1.day

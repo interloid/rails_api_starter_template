@@ -91,21 +91,9 @@ test:
 # Read https://guides.rubyonrails.org/configuring.html#configuring-a-database
 # for a full overview on how database connection configuration can be specified.
 #
+# Single-database topology (Section 9): Solid Queue, Solid Cache, and Solid Cable
+# all live in the PRIMARY database. No separate cache/queue/cable sub-databases.
 production:
-  primary: &primary_production
+  primary:
     <<: *default
-    database: rails_api_starter_template_production
-    username: rails_api_starter_template
-    password: <%= ENV["RAILS_API_STARTER_TEMPLATE_DATABASE_PASSWORD"] %>
-  cache:
-    <<: *primary_production
-    database: rails_api_starter_template_production_cache
-    migrations_paths: db/cache_migrate
-  queue:
-    <<: *primary_production
-    database: rails_api_starter_template_production_queue
-    migrations_paths: db/queue_migrate
-  cable:
-    <<: *primary_production
-    database: rails_api_starter_template_production_cable
-    migrations_paths: db/cable_migrate
+    url: <%= ENV["DATABASE_URL"] %>

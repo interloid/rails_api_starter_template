@@ -28,5 +28,10 @@ module RailsApiStarterTemplate
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+
+    # Solid Queue backs Active Job everywhere except test (test uses the :test
+    # adapter so specs don't spawn workers). Development now really queues jobs,
+    # so deliver_later hits the queue instead of running inline.
+    config.active_job.queue_adapter = :solid_queue unless Rails.env.test?
   end
 end
