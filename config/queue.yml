@@ -7,6 +7,11 @@ default: &default
       threads: 3
       processes: 1
       polling_interval: 0.1
+# Time (seconds) workers wait for in-flight jobs to finish on shutdown before the
+# process exits. Unfinished jobs are released and re-run after restart.
+# Keep the SUM (Puma drain + this) under the orchestrator grace period.
+# Set via config/initializers/solid_queue.rb (queue.yml doesn't accept shutdown_timeout
+# in all versions).
 development:
   <<: *default
 production:

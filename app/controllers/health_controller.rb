@@ -1,11 +1,22 @@
 require "socket"
 
 class HealthController < ActionController::API
+  # When this file exists, /health/ready reports "draining" (503) so the load balancer
+  # pulls this instance BEFORE SIGTERM arrives. A preStop hook creates it (Section 14).
+  # File-based (not a Ruby signal trap) to avoid conflicting with Puma's own handlers.
+  SHUTDOWN_SENTINEL = ENV.fetch("SHUTDOWN_SENTINEL_PATH", Rails.root.join("tmp/shutdown").to_s)
+
   # GET /health/ready — readiness probe.
   # Fails (503) ONLY on critical dependencies that make this instance unable to
   # serve: database connectivity and pending migrations. Used by the load balancer
   # to pull the instance from rotation WITHOUT restarting it.
   def ready
+    if File.exist?(SHUTDOWN_SENTINEL)
+      return render json: {
+        status: "draining", checks: {}, timestamp: Time.now.utc.iso8601
+      }, status: :service_unavailable
+    end
+
     checks = { database: database_ok?, migrations: migrations_ok? }
     ok = checks.values.all?
     render json: {
