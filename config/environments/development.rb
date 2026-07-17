@@ -28,8 +28,10 @@ Rails.application.configure do
   # avoid any caching.
   config.cache_store = :solid_cache_store
 
-  # Store uploaded files on the local file system (see config/storage.yml for options).
-  config.active_storage.service = :local
+  # Use S3 once AWS credentials exist; local disk until then (keeps dev working
+  # without a bucket while exercising all upload code paths).
+  config.active_storage.service =
+    Rails.application.credentials.dig(:aws, :access_key_id).present? ? :amazon : :local
 
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = false

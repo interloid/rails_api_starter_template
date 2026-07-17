@@ -18,8 +18,10 @@ Rails.application.configure do
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
 
-  # Store uploaded files on the local file system (see config/storage.yml for options).
-  config.active_storage.service = :local
+  # Store uploaded files on S3 (see config/storage.yml → amazon).
+  config.active_storage.service = :amazon
+  # Signed blob URLs (and direct-upload URLs) expire after this window.
+  config.active_storage.urls_expire_in = 10.minutes
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   # Required so Rails trusts X-Forwarded-Proto behind a TLS-terminating load balancer.
