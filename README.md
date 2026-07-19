@@ -188,6 +188,9 @@ document**, so the docs can't drift from behavior:
 bundle exec rake rswag:specs:swaggerize   # regenerates swagger/v1/swagger.yaml
 ```
 
+CI regenerates this file and **fails if the committed copy is stale**, so after changing
+any rswag request spec, run `bundle exec rake rswag:specs:swaggerize` and commit the result.
+
 Minitest is retained alongside RSpec (`bin/rails test`).
 
 ## Background jobs

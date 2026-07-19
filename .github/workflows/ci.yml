@@ -68,6 +68,15 @@ jobs:
       # SimpleCov exits non-zero below the 80% minimum, so this enforces coverage.
       - name: Run specs
         run: bundle exec rspec
+      - name: Verify OpenAPI docs are up to date
+        # SKIP_COVERAGE so the doc-only subset run doesn't trip the SimpleCov gate;
+        # drift is detected by the git diff below, not by swaggerize's exit code.
+        run: |
+          SKIP_COVERAGE=true bundle exec rake rswag:specs:swaggerize
+          git diff --exit-code swagger/ || {
+            echo "::error::swagger/v1/swagger.yaml is stale. Run 'bundle exec rake rswag:specs:swaggerize' and commit the result."
+            exit 1
+          }
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v4
