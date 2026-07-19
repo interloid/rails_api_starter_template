@@ -35,12 +35,6 @@ gem "solid_cable"
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 
-# Deploy this application anywhere as a Docker container [https://kamal-deploy.org]
-gem "kamal", require: false
-
-# Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/]
-gem "thruster", require: false
-
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 1.2"
 
@@ -58,10 +52,6 @@ gem "jwt"
 
 # Minimal authorization / RBAC policies
 gem "pundit"
-
-# OpenAPI/Swagger docs (rswag-specs — spec-driven generation — added in Section 13 with RSpec)
-gem "rswag-api"
-gem "rswag-ui"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
@@ -89,6 +79,11 @@ group :development, :test do
 end
 
 group :development do
+  # Swagger UI + API engines — mounted only in development (config/routes.rb). Kept out
+  # of production (BUNDLE_WITHOUT="development") so the docs UI never ships in the image.
+  gem "rswag-api"
+  gem "rswag-ui"
+
   # Web dashboard for Solid Queue (jobs, workers, failed jobs), mounted at /jobs.
   # Dev-only: it needs an asset pipeline (propshaft + importmap), which this API-only
   # app otherwise omits — keeping it here keeps production lean. Prod gating: Section 14.

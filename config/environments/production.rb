@@ -29,7 +29,9 @@ Rails.application.configure do
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
   # Owns HSTS + the HTTP->HTTPS redirect (secure_headers opts out of HSTS to avoid duplication).
-  config.force_ssl = true
+  # Default ON. Set FORCE_SSL=false for local container testing, or on platforms that
+  # terminate TLS upstream and don't want a double redirect.
+  config.force_ssl = ENV.fetch("FORCE_SSL", "true") == "true"
 
   # Skip the http->https redirect for health probes: load balancers hit these over
   # plain HTTP internally, and a 301 would make them mark the instance unhealthy.
