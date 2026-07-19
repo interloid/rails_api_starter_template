@@ -1,9 +1,10 @@
 # syntax=docker/dockerfile:1
 # check=error=true
 
-# This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
-# docker build -t rails_api_starter_template .
-# docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name rails_api_starter_template rails_api_starter_template
+# Portable production image — runs Puma directly on any platform (ECS, Kubernetes,
+# Fly.io, Render, Cloud Run, plain Docker). Build and run by hand:
+# docker build --build-arg GIT_SHA=$(git rev-parse HEAD) -t rails_api_starter_template .
+# docker run -d -p 3000:3000 -e RAILS_MASTER_KEY=<value from config/master.key> --name rails_api_starter_template rails_api_starter_template
 
 # For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
 
@@ -62,13 +63,26 @@ RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash
 USER 1000:1000
 
-# Copy built artifacts: gems, application
+# Copy built artifacts: gems, application. --chown makes the whole app tree (including
+# /rails/tmp, where the Section 10 shutdown sentinel is written at runtime) owned by
+# the non-root rails user.
 COPY --chown=rails:rails --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --chown=rails:rails --from=build /rails /rails
 
-# Entrypoint prepares the database.
+# Commit SHA baked at build time — populates the `commit` field in /health (Section 4).
+ARG GIT_SHA=unknown
+ENV GIT_SHA=${GIT_SHA}
+
+# Entrypoint prepares the database (migrations are opt-in via RUN_DB_PREPARE).
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
-# Start server via Thruster by default, this can be overwritten at runtime
-EXPOSE 80
-CMD ["./bin/thrust", "./bin/rails", "server"]
+# Puma reads PORT (config/puma.rb), so any platform can override it.
+ENV PORT=3000
+EXPOSE 3000
+
+# Container-level liveness check hitting the Rails /up probe.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD curl -fsS http://localhost:${PORT}/up || exit 1
+
+# Start Puma directly (portable — no Thruster). Overridable at runtime.
+CMD ["./bin/rails", "server"]

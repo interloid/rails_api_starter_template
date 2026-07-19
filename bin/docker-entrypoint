@@ -1,7 +1,9 @@
 #!/bin/bash -e
 
-# If running the rails server then create or migrate existing database
-if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+# Migrations are opt-in: running them on every replica boot races in multi-instance
+# deployments. Prefer a separate release/deploy step. Set RUN_DB_PREPARE=true for
+# platforms that run migrations via the app container (e.g. Fly release_command).
+if [ "${RUN_DB_PREPARE}" = "true" ]; then
   ./bin/rails db:prepare
 fi
 

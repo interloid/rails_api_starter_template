@@ -7,9 +7,11 @@
 # Ignore bundler config.
 /.bundle
 
-# Ignore all environment files, but keep the documented example.
+# Ignore all environment files, but keep the documented examples.
+# .env.docker holds the RUNTIME master key and must never be committed.
 /.env*
 !/.env.example
+!/.env.docker.example
 
 # Ignore all logfiles and tempfiles.
 /log/*
