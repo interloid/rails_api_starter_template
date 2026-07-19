@@ -33,14 +33,24 @@ Rails.application.configure do
   config.active_storage.service =
     Rails.application.credentials.dig(:aws, :access_key_id).present? ? :amazon : :local
 
-  # Don't care if the mailer can't send.
-  config.action_mailer.raise_delivery_errors = false
-
-  # Make template changes take effect immediately.
+  # Links in mailer templates point back at the local server.
+  config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
+  config.action_mailer.raise_delivery_errors = true
   config.action_mailer.perform_caching = false
 
-  # Set localhost to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
+  # Inert unless SMTP credentials exist — the app boots fine without them.
+  if Rails.application.credentials.smtp.present?
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.perform_deliveries = true
+    config.action_mailer.smtp_settings = {
+      address: ENV.fetch("SMTP_ADDRESS", "smtp.gmail.com"),
+      port: ENV.fetch("SMTP_PORT", 587).to_i,
+      user_name: Rails.application.credentials.smtp[:user_name],
+      password: Rails.application.credentials.smtp[:password],
+      authentication: "plain",
+      enable_starttls_auto: true
+    }
+  end
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
