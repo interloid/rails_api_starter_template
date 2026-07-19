@@ -295,6 +295,7 @@ paths:
       - Auth
       security:
       - bearerAuth: []
+      parameters: []
       responses:
         '200':
           description: logged out
@@ -308,6 +309,16 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/ErrorResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+              description: 'Optional: provide to log out just this device; omit to
+                log out everywhere.'
   "/api/v1/auth/me":
     get:
       summary: Current user
