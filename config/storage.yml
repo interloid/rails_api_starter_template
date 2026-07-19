@@ -7,12 +7,14 @@ local:
   root: <%= Rails.root.join("storage") %>
 
 # Set the AWS secrets via bin/rails credentials:edit (aws:access_key_id|secret_access_key|region|bucket).
+# Falls back to the standard AWS_* env vars so the app can boot in environments that
+# inject config via ENV (e.g. IAM role for keys + AWS_REGION) rather than credentials.
 amazon:
   service: S3
-  access_key_id: <%= Rails.application.credentials.dig(:aws, :access_key_id) %>
-  secret_access_key: <%= Rails.application.credentials.dig(:aws, :secret_access_key) %>
-  region: <%= Rails.application.credentials.dig(:aws, :region) %>
-  bucket: <%= Rails.application.credentials.dig(:aws, :bucket) %>
+  access_key_id: <%= Rails.application.credentials.dig(:aws, :access_key_id) || ENV["AWS_ACCESS_KEY_ID"] %>
+  secret_access_key: <%= Rails.application.credentials.dig(:aws, :secret_access_key) || ENV["AWS_SECRET_ACCESS_KEY"] %>
+  region: <%= Rails.application.credentials.dig(:aws, :region) || ENV["AWS_REGION"] %>
+  bucket: <%= Rails.application.credentials.dig(:aws, :bucket) || ENV["AWS_BUCKET"] %>
 
 # Remember not to checkin your GCS keyfile to a repository
 # google:

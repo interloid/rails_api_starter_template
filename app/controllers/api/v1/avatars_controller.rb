@@ -27,7 +27,7 @@ module Api
         render_success(nil, message: "Avatar removed")
       end
 
-      # POST /api/v1/users/:id/avatar/presign  (direct-to-S3: client uploads to the
+      # POST /api/v1/users/:id/avatar_presign  (direct-to-S3: client uploads to the
       # returned URL, then calls PUT avatar with the signed_id)
       def presign
         authorize @user, :update?

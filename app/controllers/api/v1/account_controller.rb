@@ -1,6 +1,10 @@
 module Api
   module V1
     class AccountController < BaseController
+      # All actions are public, token/email-scoped self-service (confirm, reset, resend) —
+      # they resolve the target user from a token/email, not a record-level policy.
+      skip_after_action :verify_authorized, raise: false
+
       allow_unauthenticated only: %i[confirm_email forgot_password reset_password resend_confirmation]
 
       # Brute-force protection on these public, email-triggering endpoints.

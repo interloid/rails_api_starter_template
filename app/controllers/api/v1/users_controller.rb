@@ -3,14 +3,20 @@ module Api
     class UsersController < BaseController
       def index
         authorize User                                   # -> UserPolicy#index?
-        scope = policy_scope(User).includes(:roles).order(created_at: :desc)
+        # Eager-load the avatar attachment + blob (UserSerializer reads avatar_url).
+        # NOTE: .with_attached_avatar would ALSO pull the blob's variant_records +
+        # preview_image_attachment (variant tracking), which the serializer never uses —
+        # Bullet (raise on unused eager loading) rejects that. Load only what we read.
+        scope = policy_scope(User)
+                .includes(:roles, avatar_attachment: :blob)
+                .order(created_at: :desc)
         pagy, users = paginate(scope)
         render_success(UserSerializer.many(users), message: "Users retrieved successfully",
                        pagination_meta: pagination_meta(pagy))
       end
 
       def show
-        user = User.kept.includes(:roles).find(params[:id])
+        user = User.kept.includes(:roles, avatar_attachment: :blob).find(params[:id])
         authorize user                                   # -> UserPolicy#show?
         render_success(UserSerializer.one(user), message: "User retrieved successfully")
       end

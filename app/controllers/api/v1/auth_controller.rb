@@ -1,6 +1,10 @@
 module Api
   module V1
     class AuthController < BaseController
+      # Auth flows act on the authenticated user themselves (or create a new account) —
+      # there is no per-record policy to enforce, so Pundit's guard does not apply.
+      skip_after_action :verify_authorized, raise: false
+
       allow_unauthenticated only: %i[register login refresh]
       # Stricter rate limit on auth endpoints (brute-force protection).
       rate_limit to: 10, within: 1.minute, by: -> { request.remote_ip },
@@ -11,6 +15,12 @@ module Api
       def register
         user = User.new(register_params)
         user.save!   # RecordInvalid -> validation_failed envelope via ExceptionHandler
+
+        # Grant the default role so the new user passes their own permission checks.
+        # find_by (not find_by!) so a missing role (unseeded env) doesn't crash registration.
+        default_role = Role.find_by(name: ENV.fetch("DEFAULT_USER_ROLE", "member"))
+        user.roles << default_role if default_role
+
         UserMailer.confirmation_email(user, user.generate_token_for(:email_confirmation)).deliver_later
         render_success(UserSerializer.one(user), message: "Registered successfully", status: :created)
       end
@@ -29,6 +39,12 @@ module Api
           user&.register_failed_attempt!
           return render_error(message: "Invalid email or password",
                               error_code: "invalid_credentials", status: :unauthorized)
+        end
+
+        # Opt-in email-confirmation gate (default OFF so the template works out of the box).
+        if ENV.fetch("REQUIRE_EMAIL_CONFIRMATION", "false") == "true" && !user.confirmed?
+          return render_error(message: "Please confirm your email address before logging in",
+                              error_code: "email_unconfirmed", status: :forbidden)
         end
 
         user.reset_failed_attempts!
@@ -64,9 +80,21 @@ module Api
       end
 
       # POST /api/v1/auth/logout  (authenticated)
+      # With a refresh_token: log out just that device (revoke its family). Without one:
+      # log out everywhere (revoke all the user's active tokens).
       def logout
-        RefreshToken.active.where(user: current_user).update_all(revoked_at: Time.current)
-        render_success(nil, message: "Logged out successfully")
+        raw = params[:refresh_token].to_s
+        token = raw.present? ? RefreshToken.find_by_raw(raw) : nil
+
+        if token && token.user_id == current_user.id
+          token.revoke_family!          # this device only
+          message = "Logged out from this device"
+        else
+          RefreshToken.active.where(user: current_user).update_all(revoked_at: Time.current)
+          message = "Logged out from all devices"
+        end
+
+        render_success(nil, message: message)
       end
 
       # GET /api/v1/auth/me  (authenticated)

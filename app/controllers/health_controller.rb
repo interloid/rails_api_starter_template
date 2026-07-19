@@ -85,7 +85,7 @@ class HealthController < ActionController::API
 
   def info_payload
     {
-      app:            ENV.fetch("SERVICE_NAME", "rails_api_starter_template"),
+      app:            ENV.fetch("SERVICE_NAME", "rails_starter_template"),
       environment:    Rails.env,
       version:        ENV.fetch("APP_VERSION", "unknown"),
       commit:         app_revision,

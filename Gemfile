@@ -78,6 +78,14 @@ group :development, :test do
 
   # Auto-load machine-local env vars from .env* files (dev/test only, never prod)
   gem "dotenv-rails"
+
+  # RSpec test stack (Minitest is kept alongside — see test/).
+  gem "rspec-rails"
+  gem "factory_bot_rails"
+  gem "shoulda-matchers"
+  gem "faker"
+  gem "rswag-specs"          # used in 13B to generate OpenAPI from request specs
+  gem "simplecov", require: false
 end
 
 group :development do

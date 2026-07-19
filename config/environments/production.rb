@@ -31,8 +31,13 @@ Rails.application.configure do
   # Owns HSTS + the HTTP->HTTPS redirect (secure_headers opts out of HSTS to avoid duplication).
   config.force_ssl = true
 
-  # Skip http-to-https redirect for the default health check endpoint.
-  # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
+  # Skip the http->https redirect for health probes: load balancers hit these over
+  # plain HTTP internally, and a 301 would make them mark the instance unhealthy.
+  config.ssl_options = {
+    redirect: {
+      exclude: ->(request) { request.path == "/up" || request.path.start_with?("/health") }
+    }
+  }
 
   # Log to STDOUT with the current request id as a default log tag.
   config.log_tags = [ :request_id ]
@@ -57,7 +62,7 @@ Rails.application.configure do
     payload = event.payload
     data = {
       time:           Time.now.utc.iso8601,
-      service:        ENV.fetch("SERVICE_NAME", "backend_starter"),
+      service:        ENV.fetch("SERVICE_NAME", "rails_starter_template"),
       env:            Rails.env,
       correlation_id: payload[:correlation_id],
       request_id:     payload[:request_id],
