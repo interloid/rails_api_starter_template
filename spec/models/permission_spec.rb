@@ -21,9 +21,7 @@ RSpec.describe Permission do
   describe "auto-derived name" do
     it "sets name to \"resource:action\"" do
       permission = create(:permission, resource: "users", action: "read")
-      # ⚠️ INTENTIONAL FAILURE — CI smoke test only. Real value is "users:read".
-      # REVERT this to eq("users:read") once the failing build has been verified.
-      expect(permission.name).to eq("users:write")
+      expect(permission.name).to eq("users:read")
     end
   end
 end
