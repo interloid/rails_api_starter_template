@@ -18,8 +18,10 @@ Rails.application.configure do
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
 
-  # Store uploaded files on the local file system (see config/storage.yml for options).
-  config.active_storage.service = :local
+  # Store uploaded files on S3 (see config/storage.yml → amazon).
+  config.active_storage.service = :amazon
+  # Signed blob URLs (and direct-upload URLs) expire after this window.
+  config.active_storage.urls_expire_in = 10.minutes
 
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   # Required so Rails trusts X-Forwarded-Proto behind a TLS-terminating load balancer.
@@ -29,8 +31,13 @@ Rails.application.configure do
   # Owns HSTS + the HTTP->HTTPS redirect (secure_headers opts out of HSTS to avoid duplication).
   config.force_ssl = true
 
-  # Skip http-to-https redirect for the default health check endpoint.
-  # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
+  # Skip the http->https redirect for health probes: load balancers hit these over
+  # plain HTTP internally, and a 301 would make them mark the instance unhealthy.
+  config.ssl_options = {
+    redirect: {
+      exclude: ->(request) { request.path == "/up" || request.path.start_with?("/health") }
+    }
+  }
 
   # Log to STDOUT with the current request id as a default log tag.
   config.log_tags = [ :request_id ]
@@ -55,7 +62,7 @@ Rails.application.configure do
     payload = event.payload
     data = {
       time:           Time.now.utc.iso8601,
-      service:        ENV.fetch("SERVICE_NAME", "backend_starter"),
+      service:        ENV.fetch("SERVICE_NAME", "rails_starter_template"),
       env:            Rails.env,
       correlation_id: payload[:correlation_id],
       request_id:     payload[:request_id],
@@ -86,21 +93,28 @@ Rails.application.configure do
   # later split the queue onto its own database.
   config.active_job.queue_adapter = :solid_queue
 
-  # Ignore bad email addresses and do not raise email delivery errors.
-  # Set this to true and configure the email server for immediate delivery to raise delivery errors.
-  # config.action_mailer.raise_delivery_errors = false
+  # Absolute URLs in emails need a real public host (a localhost default would
+  # produce dead links). Provided via ENV so the template isn't provider-locked.
+  config.action_mailer.default_url_options = {
+    host: ENV.fetch("APP_HOST", "localhost"),
+    protocol: "https"
+  }
+  config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.perform_caching = false
 
-  # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "example.com" }
-
-  # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
-  # config.action_mailer.smtp_settings = {
-  #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
-  #   password: Rails.application.credentials.dig(:smtp, :password),
-  #   address: "smtp.example.com",
-  #   port: 587,
-  #   authentication: :plain
-  # }
+  # Inert unless SMTP credentials exist — the app boots fine without them.
+  if Rails.application.credentials.smtp.present?
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.perform_deliveries = true
+    config.action_mailer.smtp_settings = {
+      address: ENV.fetch("SMTP_ADDRESS", "smtp.gmail.com"),
+      port: ENV.fetch("SMTP_PORT", 587).to_i,
+      user_name: Rails.application.credentials.smtp[:user_name],
+      password: Rails.application.credentials.smtp[:password],
+      authentication: "plain",
+      enable_starttls_auto: true
+    }
+  end
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).

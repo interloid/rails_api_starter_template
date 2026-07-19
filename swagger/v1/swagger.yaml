@@ -1,11 +1,12 @@
+---
 openapi: 3.0.3
 info:
   title: Rails API Starter Template
   version: v1
-  description: API documentation. Responses use a consistent envelope.
+  description: API documentation. All responses use a consistent envelope.
 servers:
-  - url: http://localhost:3000
-    description: Development
+- url: http://localhost:3000
+  description: Development
 components:
   securitySchemes:
     bearerAuth:
@@ -16,58 +17,554 @@ components:
     SuccessResponse:
       type: object
       properties:
-        success: { type: boolean, example: true }
-        status_code: { type: integer, example: 200 }
-        message: { type: string }
-        data: { type: object, nullable: true }
+        success:
+          type: boolean
+          example: true
+        status_code:
+          type: integer
+          example: 200
+        message:
+          type: string
+        data:
+          nullable: true
+          description: Response payload (object, array, or null).
         pagination_meta:
           type: object
           nullable: true
           properties:
-            total: { type: integer }
-            page: { type: integer }
-            records_per_page: { type: integer }
-            total_pages: { type: integer }
-        meta_data: { type: object, nullable: true }
-        timestamp: { type: string, format: date-time }
-        path: { type: string }
+            total:
+              type: integer
+            page:
+              type: integer
+            records_per_page:
+              type: integer
+            total_pages:
+              type: integer
+        meta_data:
+          type: object
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
     ErrorResponse:
       type: object
       properties:
-        success: { type: boolean, example: false }
-        status_code: { type: integer, example: 422 }
-        error_code: { type: string, example: validation_failed }
-        message: { type: string }
+        success:
+          type: boolean
+          example: false
+        status_code:
+          type: integer
+          example: 422
+        error_code:
+          type: string
+          example: validation_failed
+        message:
+          type: string
         errors:
           type: array
           items:
             type: object
             properties:
-              field: { type: string, nullable: true }
-              message: { type: string }
-        timestamp: { type: string, format: date-time }
-        path: { type: string }
+              field:
+                type: string
+                nullable: true
+              message:
+                type: string
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
 paths:
-  /api/v1/status:
-    get:
-      summary: API status
-      tags: [System]
+  "/api/v1/account/forgot_password":
+    post:
+      summary: Request a password reset
+      tags:
+      - Account
+      parameters: []
       responses:
-        "200":
-          description: API is operational
+        '200':
+          description: generic message (nonexistent email — no enumeration)
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/SuccessResponse" }
-  /health:
-    get:
-      summary: Detailed health check
-      tags: [System]
+              schema:
+                "$ref": "#/components/schemas/SuccessResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+              required:
+              - email
+  "/api/v1/account/reset_password":
+    post:
+      summary: Reset the password with a token
+      tags:
+      - Account
+      parameters: []
       responses:
-        "200": { description: Healthy }
-        "503": { description: Unhealthy }
-  /up:
-    get:
-      summary: Liveness probe
-      tags: [System]
+        '200':
+          description: password reset
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SuccessResponse"
+        '422':
+          description: invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                password:
+                  type: string
+              required:
+              - token
+              - password
+  "/api/v1/account/confirm_email":
+    post:
+      summary: Confirm the email with a token
+      tags:
+      - Account
+      parameters: []
       responses:
-        "200": { description: Alive }
+        '200':
+          description: email confirmed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SuccessResponse"
+        '422':
+          description: invalid token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+              required:
+              - token
+  "/api/v1/account/resend_confirmation":
+    post:
+      summary: Resend the confirmation email
+      tags:
+      - Account
+      parameters: []
+      responses:
+        '200':
+          description: generic message
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SuccessResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+              required:
+              - email
+  "/api/v1/auth/register":
+    post:
+      summary: Register a new account
+      tags:
+      - Auth
+      parameters: []
+      responses:
+        '201':
+          description: account created
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SuccessResponse"
+        '422':
+          description: validation failed (duplicate email)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+              required:
+              - email
+              - password
+  "/api/v1/auth/login":
+    post:
+      summary: Log in
+      tags:
+      - Auth
+      parameters: []
+      responses:
+        '200':
+          description: logged in
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SuccessResponse"
+        '401':
+          description: invalid credentials
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        '403':
+          description: account locked
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+              required:
+              - email
+              - password
+  "/api/v1/auth/refresh":
+    post:
+      summary: Rotate the refresh token
+      tags:
+      - Auth
+      parameters: []
+      responses:
+        '200':
+          description: new token pair issued
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SuccessResponse"
+        '401':
+          description: invalid refresh token
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+              required:
+              - refresh_token
+  "/api/v1/auth/logout":
+    post:
+      summary: Log out (revoke refresh tokens)
+      tags:
+      - Auth
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: logged out
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SuccessResponse"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/v1/auth/me":
+    get:
+      summary: Current user
+      tags:
+      - Auth
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: current user returned
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SuccessResponse"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/v1/users/{id}/avatar":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      required: true
+    put:
+      summary: Upload an avatar (multipart)
+      tags:
+      - Avatars
+      security:
+      - bearerAuth: []
+      parameters: []
+      responses:
+        '200':
+          description: avatar uploaded (own record, PNG)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SuccessResponse"
+        '422':
+          description: invalid content type
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        '403':
+          description: forbidden (another user's avatar)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: string
+              format: binary
+    delete:
+      summary: Remove the avatar
+      tags:
+      - Avatars
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: avatar removed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SuccessResponse"
+  "/api/v1/users/{id}/avatar_presign":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      required: true
+    post:
+      summary: Create a presigned direct-upload URL
+      tags:
+      - Avatars
+      security:
+      - bearerAuth: []
+      parameters: []
+      responses:
+        '200':
+          description: presigned upload created
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SuccessResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filename:
+                  type: string
+                byte_size:
+                  type: integer
+                checksum:
+                  type: string
+                content_type:
+                  type: string
+              required:
+              - filename
+              - byte_size
+              - checksum
+              - content_type
+  "/api/v1/status":
+    get:
+      summary: Service status (public)
+      tags:
+      - Status
+      responses:
+        '200':
+          description: operational
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SuccessResponse"
+  "/health":
+    get:
+      summary: Detailed health diagnostics
+      tags:
+      - Health
+      responses:
+        '200':
+          description: healthy
+  "/health/ready":
+    get:
+      summary: Readiness probe
+      tags:
+      - Health
+      responses:
+        '200':
+          description: ready
+  "/up":
+    get:
+      summary: Rails liveness probe
+      tags:
+      - Health
+      responses:
+        '200':
+          description: up
+  "/api/v1/users":
+    get:
+      summary: List users
+      tags:
+      - Users
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+        required: false
+      - name: per_page
+        in: query
+        schema:
+          type: integer
+        required: false
+      responses:
+        '200':
+          description: users listed
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SuccessResponse"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+  "/api/v1/users/{id}":
+    parameters:
+    - name: id
+      in: path
+      schema:
+        type: string
+      required: true
+    get:
+      summary: Fetch a user
+      tags:
+      - Users
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: user found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SuccessResponse"
+        '404':
+          description: user not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+        '401':
+          description: unauthenticated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+    patch:
+      summary: Update a user
+      tags:
+      - Users
+      security:
+      - bearerAuth: []
+      parameters: []
+      responses:
+        '200':
+          description: updated own record
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SuccessResponse"
+        '403':
+          description: forbidden (updating another user as member)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+    delete:
+      summary: Delete a user
+      tags:
+      - Users
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: deleted (admin)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SuccessResponse"
+        '403':
+          description: forbidden (member cannot delete)
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorResponse"

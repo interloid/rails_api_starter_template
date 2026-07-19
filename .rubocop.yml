@@ -14,3 +14,26 @@ AllCops:
     - "bin/**/*"
     - "vendor/**/*"
     - "tmp/**/*"
+
+# Relax a few rubocop-rspec style cops that would otherwise force specs to be
+# split/contorted in ways that hurt readability. rubocop-rspec stays ON otherwise.
+RSpec/ExampleLength:
+  Enabled: false
+RSpec/MultipleExpectations:
+  Enabled: false
+RSpec/NestedGroups:
+  Enabled: false
+RSpec/MultipleMemoizedHelpers:
+  Enabled: false
+
+# rswag request specs use the path/response/run_test! DSL. rubocop-rspec doesn't
+# recognize run_test! as an example, so it treats the describe as an "empty example
+# group" — and its UNSAFE autocorrect DELETES the whole block. It also flags the
+# capitalized `Authorization` let that rswag REQUIRES (it maps to the auth header).
+# Disable both cops for the rswag spec files only; rubocop-rspec stays on elsewhere.
+RSpec/EmptyExampleGroup:
+  Exclude:
+    - "spec/requests/api/v1/*_spec.rb"
+RSpec/VariableName:
+  Exclude:
+    - "spec/requests/api/v1/*_spec.rb"

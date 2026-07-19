@@ -7,6 +7,15 @@ module ExceptionHandler
     rescue_from ActiveRecord::RecordInvalid,        with: :handle_record_invalid
     rescue_from ActionController::ParameterMissing, with: :handle_parameter_missing
     rescue_from Pundit::NotAuthorizedError,         with: :handle_forbidden
+
+    # A forgotten authorize/policy_scope is a security bug, not a 500. Registered
+    # after StandardError (rescue_from is last-registered-wins) so it takes precedence.
+    rescue_from Pundit::AuthorizationNotPerformedError, with: :handle_authorization_missing
+    rescue_from Pundit::PolicyScopingNotPerformedError, with: :handle_authorization_missing
+
+    # Malformed JSON body (or other unparseable params) — keep the JSON envelope
+    # instead of leaking Rails' default 400 HTML/error page.
+    rescue_from ActionDispatch::Http::Parameters::ParseError, with: :handle_parse_error
   end
 
   private
@@ -30,6 +39,17 @@ module ExceptionHandler
   def handle_forbidden(_exception)
     render_error(message: "You are not authorized to perform this action",
                  error_code: "forbidden", status: :forbidden)
+  end
+
+  def handle_authorization_missing(exception)
+    Rails.logger.error("Authorization not performed: #{exception.class}")
+    render_error(message: "Authorization not performed", error_code: "authorization_missing",
+                 status: :forbidden)
+  end
+
+  def handle_parse_error(_exception)
+    render_error(message: "Malformed request body", error_code: "malformed_json",
+                 status: :bad_request)
   end
 
   def handle_internal_error(exception)

@@ -28,6 +28,11 @@
 threads_count = ENV.fetch("RAILS_MAX_THREADS", 3)
 threads threads_count, threads_count
 
+# Graceful shutdown: on SIGTERM, stop accepting new connections and give in-flight
+# requests time to finish before exit. Keep this LESS than the orchestrator's
+# termination grace period (see Section 14 / Kubernetes terminationGracePeriodSeconds).
+worker_shutdown_timeout 25 if respond_to?(:worker_shutdown_timeout)
+
 # Specifies the `port` that Puma will listen on to receive requests; default is 3000.
 port ENV.fetch("PORT", 3000)
 
@@ -36,6 +41,9 @@ plugin :tmp_restart
 
 # Run Solid Queue inside Puma when SOLID_QUEUE_IN_PUMA is set (single-server default).
 # For higher traffic, unset this and run a dedicated `bin/jobs` process instead.
+# NOTE: Do NOT use Puma phased restarts (`pumactl phased-restart`) while Solid Queue
+# runs in-Puma — the plugin halts the supervisor mid-phase (rails/solid_queue#563).
+# Use full restarts / rolling container deploys instead.
 plugin :solid_queue if ENV["SOLID_QUEUE_IN_PUMA"] == "true"
 
 # Specify the PID file. Defaults to tmp/pids/server.pid in development.

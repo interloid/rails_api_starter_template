@@ -12,7 +12,13 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       get "status", to: "status#show"
-      resources :users, only: %i[index show update destroy]
+      resources :users, only: %i[index show update destroy] do
+        member do
+          put    :avatar,         to: "avatars#update"
+          delete :avatar,         to: "avatars#destroy"
+          post   :avatar_presign, to: "avatars#presign"
+        end
+      end
 
       post "auth/register", to: "auth#register"
       post "auth/login",    to: "auth#login"

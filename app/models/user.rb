@@ -9,9 +9,18 @@ class User < ApplicationRecord
   has_many :roles, through: :user_roles
   has_many :permissions, -> { distinct }, through: :roles
 
+  has_one_attached :avatar
+
   validates :email, presence: true, uniqueness: { case_sensitive: false },
                     format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :password, length: { minimum: 8 }, if: -> { password.present? }
+
+  # Validated BEFORE commit (active_storage_validations) so a bad upload never leaves
+  # an orphaned blob behind.
+  validates :avatar,
+            content_type: { in: %w[image/png image/jpeg image/webp],
+                            message: "must be a PNG, JPEG, or WebP image" },
+            size: { less_than: 5.megabytes, message: "must be smaller than 5MB" }
 
   normalizes :email, with: ->(email) { email.strip.downcase }
 

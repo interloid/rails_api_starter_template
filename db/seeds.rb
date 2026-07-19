@@ -17,14 +17,21 @@ admin.permissions = permissions                                     # admin: eve
 # profile (see UserPolicy#update?). Needs users:write for the self-service edit flow.
 member.permissions = Permission.where(resource: "users", action: %w[read write])
 
-admin_user = User.find_or_initialize_by(email: "admin@example.com")
-admin_user.assign_attributes(password: "Password123!", first_name: "Admin", last_name: "User")
-admin_user.save!
-admin_user.roles = [ admin ]
+# Demo accounts — DEVELOPMENT ONLY. Their known passwords must never exist in
+# production. Roles/permissions above ARE reference data and seed in every environment
+# (e.g. DEFAULT_USER_ROLE needs "member" to exist for registration to grant it).
+if Rails.env.development?
+  admin_user = User.find_or_initialize_by(email: "admin@example.com")
+  admin_user.assign_attributes(password: "Password123!", first_name: "Admin", last_name: "User")
+  admin_user.save!
+  admin_user.roles = [ admin ]
 
-member_user = User.find_or_initialize_by(email: "member@example.com")
-member_user.assign_attributes(password: "Password123!", first_name: "Member", last_name: "User")
-member_user.save!
-member_user.roles = [ member ]
+  member_user = User.find_or_initialize_by(email: "member@example.com")
+  member_user.assign_attributes(password: "Password123!", first_name: "Member", last_name: "User")
+  member_user.save!
+  member_user.roles = [ member ]
+else
+  puts "Skipping demo users (non-development environment)"
+end
 
 puts "Seeded: #{Permission.count} permissions, #{Role.count} roles, #{User.count} users"

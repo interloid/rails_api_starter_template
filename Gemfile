@@ -20,6 +20,10 @@ gem "puma", ">= 5.0"
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 gem "bcrypt", "~> 3.1.7"
 
+# File uploads via Active Storage + S3.
+gem "aws-sdk-s3", require: false          # S3 service backend
+gem "active_storage_validations"          # validate content-type/size BEFORE commit (avoids orphan blobs)
+
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
@@ -74,6 +78,14 @@ group :development, :test do
 
   # Auto-load machine-local env vars from .env* files (dev/test only, never prod)
   gem "dotenv-rails"
+
+  # RSpec test stack (Minitest is kept alongside — see test/).
+  gem "rspec-rails"
+  gem "factory_bot_rails"
+  gem "shoulda-matchers"
+  gem "faker"
+  gem "rswag-specs"          # used in 13B to generate OpenAPI from request specs
+  gem "simplecov", require: false
 end
 
 group :development do
