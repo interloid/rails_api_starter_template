@@ -106,6 +106,33 @@ All responses use one envelope. Keys are **snake_case**. Success responses have 
 | `rate_limited` | `account_locked` | `invalid_credentials` | `token_reuse_detected` |
 | `malformed_json` | `parameter_missing` | `authorization_missing` | `invalid_token` |
 | `invalid_refresh_token` | `email_unconfirmed` | `no_file` | `internal_server_error` |
+| `invalid_query_parameter` | | | |
+
+## Filtering, sorting & search
+
+List endpoints accept an allowlisted query layer. Four query-string forms:
+
+```
+?sort=-created_at,email                       # "-" = DESC, bare = ASC, comma = multiple (in order)
+?filter[email]=a@b.com                        # exact match
+?filter[first_name]=ravi                      # partial match (case-insensitive)
+?filter[created_at_from]=2026-01-01&filter[created_at_to]=2026-02-01   # inclusive date range
+?q=ravi                                        # search across declared fields
+```
+
+Every filterable/sortable/searchable field **must be declared** in the endpoint's query
+object (`app/queries/`). Anything not on the allowlist returns **400
+`invalid_query_parameter`** — unknown fields are rejected, never silently ignored (so a
+client typo surfaces immediately) and never interpolated into SQL. Adding a new filter is a
+one-line change in the query object:
+
+```ruby
+class UserQuery < ApplicationQuery
+  filterable(email: :exact, first_name: :partial, created_at: :date_range)
+  sortable   :created_at, :email, :first_name
+  searchable :email, :first_name, :last_name
+end
+```
 
 ## Authentication
 

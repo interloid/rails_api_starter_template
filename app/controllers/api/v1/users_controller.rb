@@ -3,9 +3,10 @@ module Api
     class UsersController < BaseController
       def index
         authorize User                                   # -> UserPolicy#index?
-        scope = policy_scope(User)
-                .for_serialization
-                .order(created_at: :desc)
+        # ORDER MATTERS: policy_scope first (a filter must never widen authorization),
+        # then the allowlisted query layer, then pagination.
+        scope = policy_scope(User).for_serialization
+        scope = apply_query(scope, UserQuery)
         pagy, users = paginate(scope)
         render_success(UserSerializer.many(users), message: "Users retrieved successfully",
                        pagination_meta: pagination_meta(pagy))

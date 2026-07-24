@@ -16,6 +16,10 @@ module ExceptionHandler
     # Malformed JSON body (or other unparseable params) — keep the JSON envelope
     # instead of leaking Rails' default 400 HTML/error page.
     rescue_from ActionDispatch::Http::Parameters::ParseError, with: :handle_parse_error
+
+    # An unrecognised sort/filter field is a client error (400), not a 500. Registered
+    # after StandardError (last-registered-wins) so it takes precedence.
+    rescue_from ApplicationQuery::InvalidQueryParameter, with: :handle_invalid_query
   end
 
   private
@@ -49,6 +53,11 @@ module ExceptionHandler
 
   def handle_parse_error(_exception)
     render_error(message: "Malformed request body", error_code: "malformed_json",
+                 status: :bad_request)
+  end
+
+  def handle_invalid_query(exception)
+    render_error(message: exception.message, error_code: "invalid_query_parameter",
                  status: :bad_request)
   end
 

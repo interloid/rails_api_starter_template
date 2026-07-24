@@ -2,6 +2,7 @@ module Api
   module V1
     class BaseController < ApplicationController
       include Paginatable
+      include Filterable
       include Authenticatable   # every v1 endpoint requires auth by default
       include Pundit::Authorization
 

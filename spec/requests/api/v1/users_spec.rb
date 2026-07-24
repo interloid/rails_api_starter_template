@@ -8,6 +8,23 @@ RSpec.describe "Users API", type: :request do
       security [ bearerAuth: [] ]
       parameter name: :page, in: :query, schema: { type: :integer }, required: false
       parameter name: :per_page, in: :query, schema: { type: :integer }, required: false
+      # Allowlisted sort: "-" prefix = DESC, comma-separated for multiple fields
+      # (e.g. "-created_at,email"). Unknown fields return 400 invalid_query_parameter.
+      parameter name: :sort, in: :query, required: false, schema: { type: :string },
+                description: 'Sort by allowlisted field(s). Prefix "-" for DESC, comma-separated. e.g. "-created_at,email"'
+      parameter name: :q, in: :query, required: false, schema: { type: :string },
+                description: "Case-insensitive search across email, first_name, last_name."
+      # Allowlisted filters as filter[field]=value (deepObject). Partial fields match
+      # case-insensitively; *_from / *_to bound a date range on a date field.
+      parameter name: :filter, in: :query, required: false, style: :deepObject, explode: true,
+                schema: {
+                  type: :object,
+                  properties: {
+                    email: { type: :string }, first_name: { type: :string }, last_name: { type: :string },
+                    created_at_from: { type: :string, format: :date }, created_at_to: { type: :string, format: :date },
+                    confirmed_at_from: { type: :string, format: :date }, confirmed_at_to: { type: :string, format: :date }
+                  }
+                }
 
       response "200", "users listed" do
         schema "$ref" => "#/components/schemas/SuccessResponse"
@@ -17,6 +34,16 @@ RSpec.describe "Users API", type: :request do
           body = JSON.parse(response.body)
           expect(body["success"]).to be true
           expect(body["pagination_meta"]).to include("total", "page", "records_per_page", "total_pages")
+        end
+      end
+
+      response "400", "unknown sort or filter field" do
+        schema "$ref" => "#/components/schemas/ErrorResponse"
+        let(:user) { create(:user, :admin) }
+        let(:Authorization) { auth_header_for(user) }
+        let(:sort) { "nope" }
+        run_test! do |response|
+          expect(JSON.parse(response.body)["error_code"]).to eq("invalid_query_parameter")
         end
       end
 
@@ -150,6 +177,77 @@ RSpec.describe "Users API", type: :request do
       roles = JSON.parse(response.body)["data"].map { |u| u["roles"] }
       expect(roles).to all(be_an(Array))
       expect(roles.flatten).to include("member")
+    end
+  end
+
+  describe "GET /api/v1/users query layer" do
+    let(:admin) { create(:user, :admin, email: "zadmin@example.com", first_name: "Zadmin") }
+
+    def emails(response) = JSON.parse(response.body)["data"].map { |u| u["email"] }
+
+    it "sorts ascending by email" do
+      create(:user, email: "bravo@example.com")
+      create(:user, email: "alpha@example.com")
+
+      get "/api/v1/users?sort=email", headers: { "Authorization" => auth_header_for(admin) }
+
+      expect(response).to have_http_status(:ok)
+      returned = emails(response)
+      expect(returned).to eq(returned.sort)
+      expect(returned.first).to eq("alpha@example.com")
+    end
+
+    it "filters by exact email, returning just that user" do
+      target = create(:user, email: "needle@example.com")
+      create(:user, email: "haystack@example.com")
+
+      get "/api/v1/users?filter[email]=needle@example.com",
+          headers: { "Authorization" => auth_header_for(admin) }
+
+      expect(response).to have_http_status(:ok)
+      expect(emails(response)).to contain_exactly(target.email)
+    end
+
+    it "searches across searchable fields with ?q" do
+      create(:user, email: "unrelated@example.com", first_name: "Bob")
+      match = create(:user, email: "someone@example.com", first_name: "Ravindra")
+
+      get "/api/v1/users?q=ravind", headers: { "Authorization" => auth_header_for(admin) }
+
+      expect(response).to have_http_status(:ok)
+      expect(emails(response)).to include(match.email)
+      expect(emails(response)).not_to include("unrelated@example.com")
+    end
+
+    it "returns 400 invalid_query_parameter for an unknown sort field" do
+      get "/api/v1/users?sort=nope", headers: { "Authorization" => auth_header_for(admin) }
+
+      expect(response).to have_http_status(:bad_request)
+      expect(JSON.parse(response.body)["error_code"]).to eq("invalid_query_parameter")
+    end
+
+    it "composes filtering with pagination — total reflects the FILTERED count" do
+      create_list(:user, 3, first_name: "Filtered")
+      create_list(:user, 2, first_name: "Other")
+
+      get "/api/v1/users?filter[first_name]=Filtered&per_page=2",
+          headers: { "Authorization" => auth_header_for(admin) }
+
+      expect(response).to have_http_status(:ok)
+      meta = JSON.parse(response.body)["pagination_meta"]
+      expect(meta["total"]).to eq(3)           # filtered count, not the whole table
+      expect(meta["records_per_page"]).to eq(2)
+      expect(JSON.parse(response.body)["data"].size).to eq(2)
+    end
+
+    it "raises no Bullet N+1 with filters + search applied" do
+      create_list(:user, 3, :with_avatar, first_name: "Searchable")
+
+      get "/api/v1/users?filter[first_name]=Searchable&sort=-created_at",
+          headers: { "Authorization" => auth_header_for(admin) }
+
+      # Bullet.raise = true in test — an N+1 or unused eager-load would 500 this request.
+      expect(response).to have_http_status(:ok)
     end
   end
 end
