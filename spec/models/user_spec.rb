@@ -138,6 +138,25 @@ RSpec.describe User do
       expect(described_class.kept).not_to include(user)
       expect(described_class.find(user.id)).to eq(user)
     end
+
+    it "revokes all active refresh tokens on discard" do
+      user = create(:user)
+      RefreshToken.issue!(user: user)
+      RefreshToken.issue!(user: user)
+
+      expect { user.discard! }
+        .to change { RefreshToken.active.where(user: user).count }.from(2).to(0)
+    end
+  end
+
+  describe "refresh_tokens association" do
+    it "deletes the user's refresh tokens on destroy (no FK violation)" do
+      user = create(:user)
+      RefreshToken.issue!(user: user)
+
+      expect { user.destroy! }.to change(RefreshToken, :count).by(-1)
+      expect(described_class.exists?(user.id)).to be(false)
+    end
   end
 
   describe "Confirmable" do

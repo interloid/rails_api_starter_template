@@ -15,7 +15,8 @@ RSpec.describe JwtService do
   describe ".decode failure modes" do
     it "raises InvalidToken for an expired token" do
       token = described_class.encode_access(user)
-      travel_to(described_class::ACCESS_TTL.from_now + 1.second) do
+      # Past exp AND past the clock-skew LEEWAY window, otherwise it still decodes.
+      travel_to(described_class::ACCESS_TTL.from_now + described_class::LEEWAY.seconds + 1.second) do
         expect { described_class.decode(token) }.to raise_error(described_class::InvalidToken)
       end
     end
@@ -27,12 +28,42 @@ RSpec.describe JwtService do
     end
 
     it "raises InvalidToken when the token type is not \"access\"" do
+      # iss/aud must be valid so decode reaches the type check (they're verified first).
       refresh_like = JWT.encode(
-        { sub: user.id, exp: 1.hour.from_now.to_i, type: "refresh" },
+        { sub: user.id, exp: 1.hour.from_now.to_i, type: "refresh",
+          iss: described_class::ISSUER, aud: described_class::AUDIENCE },
         described_class.secret,
         described_class::ALGORITHM
       )
       expect { described_class.decode(refresh_like) }.to raise_error(described_class::InvalidToken, /token type/)
+    end
+
+    it "raises InvalidToken for a wrong issuer" do
+      token = JWT.encode(
+        { sub: user.id, exp: 1.hour.from_now.to_i, type: "access",
+          iss: "some-other-service", aud: described_class::AUDIENCE },
+        described_class.secret,
+        described_class::ALGORITHM
+      )
+      expect { described_class.decode(token) }.to raise_error(described_class::InvalidToken, /issuer/)
+    end
+
+    it "raises InvalidToken for a wrong audience" do
+      token = JWT.encode(
+        { sub: user.id, exp: 1.hour.from_now.to_i, type: "access",
+          iss: described_class::ISSUER, aud: "some-other-audience" },
+        described_class.secret,
+        described_class::ALGORITHM
+      )
+      expect { described_class.decode(token) }.to raise_error(described_class::InvalidToken, /audience/)
+    end
+
+    it "still decodes a token whose exp is in the past but within LEEWAY" do
+      token = described_class.encode_access(user)
+      # Just past expiry but inside the LEEWAY window — clock-skew tolerance.
+      travel_to(described_class::ACCESS_TTL.from_now + (described_class::LEEWAY - 5).seconds) do
+        expect { described_class.decode(token) }.not_to raise_error
+      end
     end
   end
 

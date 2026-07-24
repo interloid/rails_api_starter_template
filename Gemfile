@@ -106,5 +106,4 @@ group :rubocop do
   gem "rubocop-rails-omakase", require: false
   gem "rubocop-rspec", require: false
   gem "rubocop-performance", require: false
-  gem "rubocop-minitest", require: false
 end

@@ -36,5 +36,20 @@ RSpec.describe "Response envelope", type: :request do
       get "/api/v1/status"
       expect(response.headers["X-Correlation-ID"]).to be_present
     end
+
+    it "includes the correlation_id in an error body, matching the response header" do
+      get "/api/v1/auth/me" # 401 — no token
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(json_body["correlation_id"]).to be_present
+      expect(json_body["correlation_id"]).to eq(response.headers["X-Correlation-ID"])
+    end
+
+    it "surfaces a client-supplied X-Correlation-ID in the error body" do
+      get "/api/v1/auth/me", headers: { "X-Correlation-ID" => "trace-err-999" }
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(json_body["correlation_id"]).to eq("trace-err-999")
+    end
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_17_161150) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_24_074932) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -65,6 +65,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_17_161150) do
     t.datetime "updated_at", null: false
     t.string "user_agent"
     t.uuid "user_id", null: false
+    t.index ["expires_at"], name: "index_refresh_tokens_on_expires_at"
     t.index ["family_id"], name: "index_refresh_tokens_on_family_id"
     t.index ["token_digest"], name: "index_refresh_tokens_on_token_digest", unique: true
     t.index ["user_id", "revoked_at"], name: "index_refresh_tokens_on_user_id_and_revoked_at"

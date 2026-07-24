@@ -33,5 +33,12 @@ module RailsApiStarterTemplate
     # adapter so specs don't spawn workers). Development now really queues jobs,
     # so deliver_later hits the queue instead of running inline.
     config.active_job.queue_adapter = :solid_queue unless Rails.env.test?
+
+    # RSpec is the test framework — keep generators from scaffolding a Minitest test/
+    # tree (and the unused fixtures/helpers that come with it).
+    config.generators do |g|
+      g.test_framework :rspec, fixtures: false
+      g.fixture_replacement :factory_bot, dir: "spec/factories"
+    end
   end
 end

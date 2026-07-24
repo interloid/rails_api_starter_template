@@ -2,6 +2,13 @@ class JwtService
   ACCESS_TTL = 15.minutes
   ALGORITHM = "HS256"
 
+  # Issuer/audience bind a token to this service. Default to SERVICE_NAME so the template
+  # works out of the box; override when tokens cross service boundaries.
+  ISSUER   = ENV.fetch("JWT_ISSUER",   ENV.fetch("SERVICE_NAME", "rails_starter_template"))
+  AUDIENCE = ENV.fetch("JWT_AUDIENCE", ENV.fetch("SERVICE_NAME", "rails_starter_template"))
+  # Tolerates small clock differences between issuing and verifying hosts.
+  LEEWAY = 30
+
   class InvalidToken < StandardError; end
 
   # Opt-in access-token revocation. Access JWTs are stateless and valid for their full
@@ -42,17 +49,29 @@ class JwtService
       jti: SecureRandom.uuid,
       iat: now,
       exp: ACCESS_TTL.from_now.to_i,
+      iss: ISSUER,
+      aud: AUDIENCE,
       type: "access"
     }, secret, ALGORITHM)
   end
 
   def self.decode(token)
-    payload, = JWT.decode(token, secret, true, algorithm: ALGORITHM)
+    payload, = JWT.decode(token, secret, true,
+                          algorithm: ALGORITHM,
+                          iss: ISSUER, verify_iss: true,
+                          aud: AUDIENCE, verify_aud: true,
+                          leeway: LEEWAY)
     raise InvalidToken, "wrong token type" unless payload["type"] == "access"
     raise InvalidToken, "token revoked" if revoked?(payload)
     payload
   rescue JWT::ExpiredSignature
     raise InvalidToken, "token expired"
+    # InvalidIssuerError/InvalidAudError are subclasses of JWT::DecodeError, so they must
+    # be rescued BEFORE it — here they get explicit, stable messages.
+  rescue JWT::InvalidIssuerError
+    raise InvalidToken, "invalid issuer"
+  rescue JWT::InvalidAudError
+    raise InvalidToken, "invalid audience"
   rescue JWT::DecodeError => e
     raise InvalidToken, e.message
   end

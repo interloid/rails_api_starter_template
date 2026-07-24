@@ -28,6 +28,9 @@ module Api
         user.roles << default_role if default_role
 
         UserMailer.confirmation_email(user, user.generate_token_for(:email_confirmation)).deliver_later
+        # No for_serialization here: `user` was just built in-process (a single record with
+        # its role assigned above and no avatar), so the serializer reads already-loaded
+        # associations — a re-fetch would only add a redundant query.
         render_success(UserSerializer.one(user), message: "Registered successfully", status: :created)
       end
 
@@ -120,7 +123,10 @@ module Api
 
       # GET /api/v1/auth/me  (authenticated)
       def me
-        render_success(UserSerializer.one(current_user), message: "Current user")
+        # Re-fetch with the serialization associations eager-loaded — authenticate_user!
+        # deliberately does NOT preload them (most endpoints never serialize the user).
+        user = User.for_serialization.find(current_user.id)
+        render_success(UserSerializer.one(user), message: "Current user")
       end
 
       private
@@ -129,6 +135,9 @@ module Api
         params.permit(:email, :password, :first_name, :last_name)
       end
 
+      # `user` here is the just-authenticated (login) or just-issued record — a single
+      # object already in memory, so UserSerializer's roles/avatar reads are 1-record
+      # lookups, not an N+1. No for_serialization needed.
       def issue_tokens(user, family_id: nil)
         _record, raw_refresh = RefreshToken.issue!(
           user: user, family_id: family_id,

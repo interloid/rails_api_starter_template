@@ -30,8 +30,9 @@ RSpec.describe "Login enumeration resistance", type: :request do
       expect(unknown_email["error_code"]).to eq("invalid_credentials")
       expect(wrong_password["message"]).to eq(unknown_email["message"])
 
-      # Everything except the per-request timestamp/path must match exactly.
-      volatile = %w[timestamp path]
+      # Everything except per-request volatile fields must match exactly. correlation_id
+      # is a fresh trace id per request, so it legitimately differs between the two calls.
+      volatile = %w[timestamp path correlation_id]
       expect(wrong_password.except(*volatile)).to eq(unknown_email.except(*volatile))
     end
   end

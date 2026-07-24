@@ -8,6 +8,14 @@ class User < ApplicationRecord
   has_many :user_roles, dependent: :destroy
   has_many :roles, through: :user_roles
   has_many :permissions, -> { distinct }, through: :roles
+  # delete_all: the FK has no ON DELETE CASCADE, so a hard destroy must clear these
+  # rows itself (opaque tokens carry no callbacks worth firing).
+  has_many :refresh_tokens, dependent: :delete_all
+
+  # Associations UserSerializer touches — use wherever a User is fetched for serialization.
+  # (avatar_attachment: :blob rather than .with_attached_avatar, which would also pull
+  # variant_records the serializer never reads and trip Bullet's unused-eager-load check.)
+  scope :for_serialization, -> { includes(:roles, avatar_attachment: :blob) }
 
   has_one_attached :avatar
 
@@ -23,6 +31,12 @@ class User < ApplicationRecord
             size: { less_than: 5.megabytes, message: "must be smaller than 5MB" }
 
   normalizes :email, with: ->(email) { email.strip.downcase }
+
+  # Discarding a user must terminate their sessions — otherwise their refresh tokens
+  # remain usable even though authentication rejects them.
+  after_discard do
+    refresh_tokens.where(revoked_at: nil).update_all(revoked_at: Time.current)
+  end
 
   # Password reset: token dies as soon as the password changes.
   generates_token_for :password_reset, expires_in: 30.minutes do

@@ -54,6 +54,7 @@ RSpec.configure do |config|
                   properties: { field: { type: :string, nullable: true }, message: { type: :string } }
                 }
               },
+              correlation_id: { type: :string, nullable: true },
               timestamp: { type: :string, format: :"date-time" },
               path: { type: :string }
             }

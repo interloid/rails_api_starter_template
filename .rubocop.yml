@@ -4,7 +4,6 @@ inherit_gem:
 plugins:
   - rubocop-rspec
   - rubocop-performance
-  - rubocop-minitest
 
 AllCops:
   NewCops: enable

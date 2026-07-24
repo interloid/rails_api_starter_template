@@ -22,6 +22,10 @@ module Renderable
       error_code: error_code,
       message: message,
       errors: errors,
+      # Echo the trace id into the body so a client pasting a JSON error into a ticket
+      # keeps it (the X-Correlation-ID header alone is easily lost). Guarded because
+      # Renderable may be included where correlation_id isn't defined.
+      correlation_id: (respond_to?(:correlation_id, true) ? correlation_id : nil),
       timestamp: Time.now.utc.iso8601,
       path: request.path
     }

@@ -48,6 +48,10 @@ module Api
 
       private
 
+      # Plain find (NOT for_serialization): this before_action also feeds #destroy and
+      # #presign, which never serialize the user — eager-loading roles/avatar there is an
+      # unused load that Bullet rejects. #update serializes only ONE record on success, so
+      # the serializer's roles/avatar reads are single-row lookups, not an N+1.
       def set_user = @user = User.kept.find(params[:id])
     end
   end
