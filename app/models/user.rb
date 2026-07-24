@@ -54,6 +54,14 @@ class User < ApplicationRecord
   def locked? = locked_at.present? && locked_at > LOCK_DURATION.ago
 
   def register_failed_attempt!
+    # A previously expired lock starts a FRESH window — otherwise one failure after
+    # expiry immediately re-locks (counter was never reset).
+    reset_failed_attempts! if locked_at.present? && !locked?
+
+    # Never extend an ACTIVE lock — otherwise an attacker can keep an account locked
+    # indefinitely by retrying every LOCK_DURATION.
+    return if locked?
+
     increment!(:failed_attempts)
     update!(locked_at: Time.current) if failed_attempts >= MAX_FAILED_ATTEMPTS
   end

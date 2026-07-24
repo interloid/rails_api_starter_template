@@ -5,6 +5,12 @@ module Api
       # there is no per-record policy to enforce, so Pundit's guard does not apply.
       skip_after_action :verify_authorized, raise: false
 
+      # Pre-computed digest so a non-existent email performs the SAME bcrypt work as an
+      # existing one. Without it, the missing-user path returns measurably faster and
+      # leaks account existence despite the generic error message.
+      DUMMY_PASSWORD_COST = ActiveModel::SecurePassword.min_cost ? BCrypt::Engine::MIN_COST : BCrypt::Engine.cost
+      DUMMY_PASSWORD_DIGEST = BCrypt::Password.create("timing-equalization-dummy", cost: DUMMY_PASSWORD_COST).freeze
+
       allow_unauthenticated only: %i[register login refresh]
       # Stricter rate limit on auth endpoints (brute-force protection).
       rate_limit to: 10, within: 1.minute, by: -> { request.remote_ip },
@@ -29,16 +35,26 @@ module Api
       def login
         user = User.kept.find_by(email: params[:email].to_s.strip.downcase)
 
-        if user&.locked?
-          return render_error(message: "Account locked. Try again later.",
-                              error_code: "account_locked", status: :forbidden)
-        end
+        authenticated =
+          if user
+            user.authenticate(params[:password].to_s)
+          else
+            # Equalize timing; result is always false.
+            BCrypt::Password.new(DUMMY_PASSWORD_DIGEST).is_password?(params[:password].to_s)
+            false
+          end
 
-        # Generic message on failure — prevents email enumeration.
-        unless user&.authenticate(params[:password].to_s)
+        unless authenticated
           user&.register_failed_attempt!
           return render_error(message: "Invalid email or password",
                               error_code: "invalid_credentials", status: :unauthorized)
+        end
+
+        # Lock state is revealed ONLY after credentials are proven — otherwise it is an
+        # account-existence oracle.
+        if user.locked?
+          return render_error(message: "Account locked. Try again later.",
+                              error_code: "account_locked", status: :forbidden)
         end
 
         # Opt-in email-confirmation gate (default OFF so the template works out of the box).
@@ -86,11 +102,16 @@ module Api
         raw = params[:refresh_token].to_s
         token = raw.present? ? RefreshToken.find_by_raw(raw) : nil
 
+        # Revoke the access token used for THIS request (no-op unless the denylist is on).
+        JwtService.revoke_jti!(current_token_payload["jti"], current_token_payload["exp"])
+
         if token && token.user_id == current_user.id
           token.revoke_family!          # this device only
           message = "Logged out from this device"
         else
           RefreshToken.active.where(user: current_user).update_all(revoked_at: Time.current)
+          # Log out everywhere: also invalidate every access token issued before now.
+          JwtService.revoke_all_for!(current_user.id)
           message = "Logged out from all devices"
         end
 

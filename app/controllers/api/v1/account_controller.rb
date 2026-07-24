@@ -52,6 +52,8 @@ module Api
 
         # SECURITY: a password reset must kill every existing session.
         RefreshToken.active.where(user: user).update_all(revoked_at: Time.current)
+        # Also invalidate any still-valid access tokens (no-op unless the denylist is on).
+        JwtService.revoke_all_for!(user.id)
         user.reset_failed_attempts!   # also unlocks a locked account
 
         render_success(nil, message: "Password reset successfully. Please log in again.")

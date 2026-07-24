@@ -15,8 +15,14 @@ RSpec.describe "Account lockout", type: :request do
       expect(json_body["error_code"]).to eq("invalid_credentials")
     end
 
-    # The next attempt is rejected as locked (even the message differs).
+    # Lock state is now checked only AFTER credentials are proven (H3): a WRONG password
+    # against a locked account still returns invalid_credentials — it must not leak the
+    # lock. The lock is observable only by supplying the CORRECT password.
     attempt_login("wrong")
+    expect(response).to have_http_status(:unauthorized)
+    expect(json_body["error_code"]).to eq("invalid_credentials")
+
+    attempt_login("Password123!")
     expect(response).to have_http_status(:forbidden)
     expect(json_body["error_code"]).to eq("account_locked")
 

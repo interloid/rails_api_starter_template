@@ -16,6 +16,7 @@ module Authenticatable
 
   def authenticate_user!
     payload = JwtService.decode(bearer_token.to_s)
+    @current_token_payload = payload
     @current_user = User.kept.find_by(id: payload["sub"])
     raise JwtService::InvalidToken, "user not found" if @current_user.nil?
   rescue JwtService::InvalidToken => e
@@ -29,4 +30,7 @@ module Authenticatable
   end
 
   def current_user = @current_user
+
+  # Decoded payload of the current access token (jti/exp/iat/sub) — used to revoke it.
+  def current_token_payload = @current_token_payload
 end

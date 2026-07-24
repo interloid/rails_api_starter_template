@@ -1,0 +1,422 @@
+<title>Rails 8 API Starter Template — Engineering Review</title>
+<style>
+  :root {
+    --paper: #F6F4EF;
+    --card: #FFFFFF;
+    --ink: #1E1F22;
+    --muted: #5C5F66;
+    --faint: #8A8D93;
+    --line: #E4E0D7;
+    --line-strong: #D3CEC2;
+    --garnet: #9B2F3A;
+    --garnet-soft: #F3E4E4;
+    --sev-crit: #B33124;
+    --sev-high: #C0672A;
+    --sev-med: #A9862C;
+    --sev-low: #3F7D5B;
+    --good: #3F7D5B;
+    --shadow: 0 1px 2px rgba(30,31,34,.04), 0 8px 24px rgba(30,31,34,.05);
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #15171A;
+      --card: #1D2024;
+      --ink: #E9E6DF;
+      --muted: #A2A6AD;
+      --faint: #787C83;
+      --line: #2A2E33;
+      --line-strong: #363B41;
+      --garnet: #DE7A83;
+      --garnet-soft: #332326;
+      --sev-crit: #E06A5D;
+      --sev-high: #E0965A;
+      --sev-med: #D8B65B;
+      --sev-low: #6FB58E;
+      --good: #6FB58E;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --paper: #F6F4EF; --card: #FFFFFF; --ink: #1E1F22; --muted: #5C5F66; --faint: #8A8D93;
+    --line: #E4E0D7; --line-strong: #D3CEC2; --garnet: #9B2F3A; --garnet-soft: #F3E4E4;
+    --sev-crit:#B33124; --sev-high:#C0672A; --sev-med:#A9862C; --sev-low:#3F7D5B; --good:#3F7D5B;
+    --shadow: 0 1px 2px rgba(30,31,34,.04), 0 8px 24px rgba(30,31,34,.05);
+  }
+  :root[data-theme="dark"] {
+    --paper:#15171A; --card:#1D2024; --ink:#E9E6DF; --muted:#A2A6AD; --faint:#787C83;
+    --line:#2A2E33; --line-strong:#363B41; --garnet:#DE7A83; --garnet-soft:#332326;
+    --sev-crit:#E06A5D; --sev-high:#E0965A; --sev-med:#D8B65B; --sev-low:#6FB58E; --good:#6FB58E;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .doc {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+    padding: clamp(20px, 5vw, 64px) clamp(16px, 5vw, 40px) 96px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+
+  /* ---- Masthead ---- */
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--garnet); font-weight: 600;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(30px, 5.5vw, 46px);
+    line-height: 1.08; letter-spacing: -.01em;
+    text-wrap: balance;
+    margin: 14px 0 0;
+  }
+  .lede {
+    font-size: clamp(16px, 2.3vw, 19px);
+    color: var(--muted); max-width: 62ch;
+    margin: 16px 0 0;
+  }
+  .meta {
+    display: flex; flex-wrap: wrap; gap: 8px 22px;
+    margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--line);
+    font-size: 13.5px; color: var(--faint); font-family: var(--mono);
+  }
+  .meta b { color: var(--muted); font-weight: 500; }
+
+  /* ---- Verdict banner ---- */
+  .verdict {
+    margin-top: 30px;
+    display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: center;
+    background: var(--card); border: 1px solid var(--line-strong);
+    border-left: 4px solid var(--garnet);
+    border-radius: 14px; padding: 22px 24px; box-shadow: var(--shadow);
+  }
+  .verdict .score {
+    font-family: var(--serif); font-weight: 600;
+    font-size: clamp(38px, 8vw, 52px); line-height: 1; color: var(--garnet);
+    font-variant-numeric: tabular-nums;
+  }
+  .verdict .score small { display:block; font-family: var(--mono); font-size: 11px; letter-spacing:.14em; text-transform:uppercase; color: var(--faint); margin-top: 6px; font-weight: 500;}
+  .verdict h2 { margin: 0 0 4px; font-size: 18px; font-family: var(--sans); font-weight: 650; letter-spacing: -.01em; }
+  .verdict p { margin: 0; color: var(--muted); font-size: 14.5px; }
+  .pill-ready { display:inline-block; margin-top:8px; font-family: var(--mono); font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color: var(--good); border:1px solid color-mix(in srgb, var(--good) 40%, transparent); background: color-mix(in srgb, var(--good) 10%, transparent); padding:3px 9px; border-radius: 999px; }
+
+  /* ---- Sections ---- */
+  section { margin-top: 52px; }
+  .kicker { font-family: var(--mono); font-size: 12px; letter-spacing:.16em; text-transform: uppercase; color: var(--faint); }
+  h2.sec { font-family: var(--serif); font-weight: 600; font-size: clamp(22px, 3.4vw, 28px); letter-spacing: -.01em; margin: 6px 0 18px; text-wrap: balance; }
+  h3 { font-size: 16px; font-weight: 650; margin: 28px 0 10px; letter-spacing: -.005em; }
+  p { margin: 0 0 14px; }
+  .prose { color: var(--ink); }
+  .prose .sub { color: var(--muted); }
+  code, .path { font-family: var(--mono); font-size: .86em; background: color-mix(in srgb, var(--garnet) 8%, transparent); color: color-mix(in srgb, var(--ink) 88%, var(--garnet)); padding: 1.5px 6px; border-radius: 5px; word-break: break-word; }
+
+  /* ---- Scorecard ---- */
+  .scorecard { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 10px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 11px; padding: 14px 15px; box-shadow: var(--shadow); }
+  .stat .label { font-size: 12.5px; color: var(--muted); }
+  .stat .val { font-family: var(--serif); font-size: 27px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 4px; letter-spacing: -.01em; display:flex; align-items:baseline; gap:2px;}
+  .stat .val small { font-size: 14px; color: var(--faint); font-family: var(--mono); }
+  .bar { height: 4px; border-radius: 3px; background: var(--line); margin-top: 10px; overflow: hidden; }
+  .bar > span { display:block; height:100%; background: var(--garnet); border-radius:3px; }
+
+  /* ---- Finding cards ---- */
+  .finding { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; box-shadow: var(--shadow); margin-bottom: 14px; }
+  .finding.crit { border-left: 4px solid var(--sev-crit); }
+  .finding.high { border-left: 4px solid var(--sev-high); }
+  .finding.med  { border-left: 4px solid var(--sev-med); }
+  .finding.low  { border-left: 4px solid var(--sev-low); }
+  .finding .top { display:flex; align-items:center; gap:10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .tag { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing:.06em; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; }
+  .tag.crit { color: var(--sev-crit); background: color-mix(in srgb, var(--sev-crit) 12%, transparent); }
+  .tag.high { color: var(--sev-high); background: color-mix(in srgb, var(--sev-high) 12%, transparent); }
+  .tag.med  { color: var(--sev-med);  background: color-mix(in srgb, var(--sev-med) 14%, transparent); }
+  .tag.low  { color: var(--sev-low);  background: color-mix(in srgb, var(--sev-low) 12%, transparent); }
+  .finding .id { font-family: var(--mono); font-size: 12.5px; color: var(--faint); font-weight: 600; }
+  .finding .title { font-weight: 650; font-size: 15.5px; }
+  .finding p { margin: 6px 0; font-size: 14.5px; color: var(--muted); }
+  .finding .fix { font-size: 14.5px; color: var(--ink); }
+  .finding .fix b { color: var(--garnet); font-weight: 600; }
+
+  .none-note { background: color-mix(in srgb, var(--good) 8%, transparent); border: 1px solid color-mix(in srgb, var(--good) 30%, transparent); border-radius: 12px; padding: 16px 20px; color: var(--muted); font-size: 14.5px; }
+  .none-note b { color: var(--good); }
+
+  /* ---- Tables ---- */
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 13.8px; background: var(--card); min-width: 560px; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); font-weight: 600; background: color-mix(in srgb, var(--paper) 55%, var(--card)); position: sticky; top: 0; }
+  tbody tr:last-child td { border-bottom: none; }
+  td.rank { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; vertical-align: middle; }
+  .g { color: var(--good); } .g .dot{ background: var(--good);}
+  .w { color: var(--sev-high); } .w .dot{ background: var(--sev-high);}
+  .m { color: var(--sev-crit); } .m .dot{ background: var(--sev-crit);}
+  .status-cell { white-space: nowrap; font-weight: 600; font-size: 13px; }
+
+  /* ---- Roadmap ---- */
+  .phase { border-left: 2px solid var(--line-strong); padding-left: 20px; margin-bottom: 22px; }
+  .phase h4 { margin: 0 0 4px; font-size: 15px; font-weight: 650; }
+  .phase .ph-tag { font-family: var(--mono); font-size: 11px; letter-spacing:.1em; text-transform: uppercase; color: var(--garnet); }
+  .phase ul { margin: 8px 0 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+  .phase li { margin-bottom: 5px; }
+  .phase li b { color: var(--ink); font-weight: 600; }
+
+  hr.rule { border: none; border-top: 1px solid var(--line); margin: 0; }
+  .foot { margin-top: 60px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 13px; color: var(--faint); }
+  .foot b { color: var(--muted); font-weight: 600; }
+  ul.clean { margin: 0 0 14px; padding-left: 20px; color: var(--muted); }
+  ul.clean li { margin-bottom: 6px; }
+  ul.clean li b { color: var(--ink); font-weight: 600; }
+  a { color: var(--garnet); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  @media (max-width: 520px){ .verdict{ grid-template-columns: 1fr; gap: 10px; } }
+</style>
+
+<div class="doc">
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Backend Engineering Review</div>
+    <h1>Rails 8 API-Only Starter Template</h1>
+    <p class="lede">An architecture, security, and production-readiness review of the shared API starter — the foundation new services will be built on. Read this before you scaffold your next API.</p>
+    <div class="meta">
+      <span><b>Stack</b> &nbsp;Rails 8.1 · Ruby 4.0.2 · PostgreSQL</span>
+      <span><b>Scope</b> &nbsp;Full codebase, API-only</span>
+      <span><b>Date</b> &nbsp;22 Jul 2026</span>
+      <span><b>Status</b> &nbsp;Review only — no code changed</span>
+    </div>
+  </header>
+
+  <div class="verdict">
+    <div class="score">8.5<small>Overall / 10</small></div>
+    <div>
+      <h2>Ready to use — after minor hardening</h2>
+      <p>A carefully engineered, near-production foundation. No critical defects were found. Complete four Phase-1 items before a security-sensitive launch.</p>
+      <span class="pill-ready">● No critical defects</span>
+    </div>
+  </div>
+
+  <!-- EXEC SUMMARY -->
+  <section class="prose">
+    <div class="kicker">01 — Executive Summary</div>
+    <h2 class="sec">A foundation that already solves the hard parts</h2>
+    <p>This is one of the more carefully built Rails API starters we've assessed. The code is idiomatic, comments explain <em>why</em> rather than <em>what</em>, and Rails 8 primitives are used correctly (<code>rate_limit</code>, <code>generates_token_for</code>, <code>normalizes</code>, the Solid stack). Most "day-2" operational concerns — health probes, graceful shutdown, structured logging, CI, container hardening — are already handled, which is exactly what most templates skip.</p>
+    <p class="sub">The security model is coherent <em>and tested</em>: JWT access tokens paired with rotating opaque refresh tokens, reuse detection with family revocation, Pundit authorization that defaults to deny, and file-upload validation that runs before the blob is committed. There is no service/form/query layer — and for the current CRUD surface, that restraint is the right call, not a gap.</p>
+
+    <h3>The five findings that matter most</h3>
+    <ul class="clean">
+      <li><b>Host authorization fails open in production</b> — an empty <code>ALLOWED_HOSTS</code> accepts any Host header, silently disabling DNS-rebinding protection.</li>
+      <li><b>Access tokens can't be revoked</b> before their 15-minute expiry — "log out everywhere" only kills refresh tokens. A documented JWT tradeoff that must be stated, not hidden.</li>
+      <li><b>Login leaks account state &amp; timing</b> — the lockout check runs before the password check, and missing users skip bcrypt, giving two enumeration oracles.</li>
+      <li><b>Rate limiting is effectively untested</b> — its security spec is skipped, so the most security-relevant control is unverified.</li>
+      <li><b>No collection filtering / sorting / search</b> — and no allowlist scaffolding, which becomes a scalability and injection-risk gap the moment a second resource lands.</li>
+    </ul>
+  </section>
+
+  <!-- ARCHITECTURE -->
+  <section class="prose">
+    <div class="kicker">02 — Architecture &amp; Request Flow</div>
+    <h2 class="sec">How a request actually moves</h2>
+    <div class="tablewrap" style="border-radius:12px;">
+      <table style="min-width:0;">
+        <tbody>
+          <tr><td class="rank">1 · Edge</td><td>Rack::Cors → SecureHeaders → Host authorization → param-depth limit (32). <span class="path">/up</span> and <span class="path">/health*</span> bypass the SSL redirect and host checks.</td></tr>
+          <tr><td class="rank">2 · Router</td><td>Versioned <span class="path">namespace :api { :v1 }</span>; unknown routes return the JSON envelope, not Rails' HTML 404.</td></tr>
+          <tr><td class="rank">3 · Base</td><td><span class="path">ApplicationController</span> adds correlation-id + per-IP rate limit; <span class="path">Api::V1::BaseController</span> mixes in auth, Pundit, and pagination.</td></tr>
+          <tr><td class="rank">4 · Auth</td><td><span class="path">authenticate_user!</span> → decode JWT → <span class="path">User.kept.find_by(id:)</span>. Public endpoints opt out explicitly.</td></tr>
+          <tr><td class="rank">5 · Authz</td><td>Pundit policy / scope over a <span class="path">permissions</span> table; <span class="path">verify_authorized</span> &amp; <span class="path">verify_policy_scoped</span> are enforced — a forgotten check is a 403, not a silent data leak.</td></tr>
+          <tr><td class="rank">6 · Data</td><td>Strong params → Active Record (<span class="path">.kept</span> scope, eager-loaded associations).</td></tr>
+          <tr><td class="rank">7 · Output</td><td>PORO serializer (explicit allowlist) → <span class="path">render_success</span>/<span class="path">render_error</span> envelope → JSON. Exceptions unwind through one central handler into the same envelope.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- FINDINGS -->
+  <section>
+    <div class="kicker">03 — Findings by Priority</div>
+    <h2 class="sec prose">What to fix, in order</h2>
+
+    <div class="none-note"><b>Critical: none confirmed.</b> No authentication bypass, SQL injection, mass-assignment, cross-tenant leak, or data-loss defect was found — an uncommon and genuine result for a starter of this scope.</div>
+
+    <h3 style="color:var(--sev-high)">High</h3>
+
+    <div class="finding high">
+      <div class="top"><span class="tag high">High</span><span class="id">H1</span><span class="title">Host authorization fails open in production</span></div>
+      <p>Host allowlisting is only applied when <code>ALLOWED_HOSTS</code> is set; unset means every Host header is accepted, negating DNS-rebinding and Host-injection protection (poisoned reset links, cache poisoning).</p>
+      <p class="path">config/environments/production.rb</p>
+      <p class="fix"><b>Fix →</b> Fail loud: raise on boot (or emit a prominent warning) when <code>ALLOWED_HOSTS</code> is blank in production, rather than defaulting to permissive.</p>
+    </div>
+
+    <div class="finding high">
+      <div class="top"><span class="tag high">High</span><span class="id">H2</span><span class="title">Access tokens are not revocable within their TTL</span></div>
+      <p>Logout and password reset revoke <em>refresh</em> tokens only; an already-issued 15-minute access JWT stays valid. Acceptable for many apps, unacceptable for high-security domains.</p>
+      <p class="path">app/services/jwt_service.rb · Authenticatable#authenticate_user!</p>
+      <p class="fix"><b>Fix →</b> Document the ≤15-min revocation window as an explicit tradeoff; offer an opt-in <code>jti</code> denylist in Solid Cache (TTL = access TTL) rather than building it on by default.</p>
+    </div>
+
+    <div class="finding high">
+      <div class="top"><span class="tag high">High</span><span class="id">H3</span><span class="title">Login enables account enumeration (state + timing)</span></div>
+      <p>The <code>locked?</code> branch returns <code>account_locked</code> before credentials are checked (state oracle), and a non-existent email short-circuits before bcrypt runs (timing oracle) — both undermine the generic failure message.</p>
+      <p class="path">app/controllers/api/v1/auth_controller.rb</p>
+      <p class="fix"><b>Fix →</b> Check lockout only after a would-be-valid password; run a dummy bcrypt comparison when the user is nil so both paths cost the same.</p>
+    </div>
+
+    <h3 style="color:var(--sev-med)">Medium</h3>
+
+    <div class="finding med">
+      <div class="top"><span class="tag med">Medium</span><span class="id">M1</span><span class="title">No filtering / sorting / search, and no allowlist scaffolding</span></div>
+      <p><code>UsersController#index</code> supports pagination + a fixed sort only. Every real API needs query params, and the unsafe implementation (interpolating <code>params[:sort]</code> into <code>order</code>) invites SQL injection — a starter should ship the safe pattern.</p>
+      <p class="fix"><b>Fix →</b> Add a query object / <code>Filterable</code> concern with an explicit allowlist mapping request fields to columns.</p>
+    </div>
+
+    <div class="finding med">
+      <div class="top"><span class="tag med">Medium</span><span class="id">M2</span><span class="title">Account lockout is a self-service DoS vector</span></div>
+      <p>Any known email can be locked for 15 minutes with 5 failed attempts, with no IP/device dimension — an attacker can lock out targeted users at will.</p>
+      <p class="fix"><b>Fix →</b> Keep as default but document it; pair with per-IP throttling (already present) and/or exponential backoff instead of a hard lock.</p>
+    </div>
+
+    <div class="finding med">
+      <div class="top"><span class="tag med">Medium</span><span class="id">M3</span><span class="title">Jobs have no explicit retry / discard policy</span></div>
+      <p><code>ApplicationJob</code> relies on Solid Queue defaults — no <code>retry_on</code>/<code>discard_on</code>, no error reporting hook. Future jobs inherit no guardrails.</p>
+      <p class="fix"><b>Fix →</b> Set sensible defaults in <code>ApplicationJob</code> and report failures to the APM.</p>
+    </div>
+
+    <div class="finding med">
+      <div class="top"><span class="tag med">Medium</span><span class="id">M4</span><span class="title">Rate limiting is untested (and fixed-window, DB-backed)</span></div>
+      <p><code>rate_limit_spec.rb</code> is skipped because the null store binds at class load. The limiter is also fixed-window (boundary bursts) and writes to Postgres on every throttled check.</p>
+      <p class="fix"><b>Fix →</b> Test with a real memory store injected in that example group; document that heavy abuse control belongs at the edge (Rack::Attack + Redis, or the LB/gateway).</p>
+    </div>
+
+    <div class="finding med">
+      <div class="top"><span class="tag med">Medium</span><span class="id">M5</span><span class="title">Single-record endpoints serialize without eager loading</span></div>
+      <p><code>me</code>, <code>login</code>, <code>register</code>, and <code>update</code> serialize a user without including roles + avatar, so the serializer fires extra queries. Bounded (one record) so impact is low, but inconsistent with <code>index</code>/<code>show</code>.</p>
+      <p class="fix"><b>Fix →</b> Reload with <code>.includes(:roles, avatar_attachment: :blob)</code>, or accept it as negligible and note it.</p>
+    </div>
+
+    <h3 style="color:var(--sev-low)">Low — cleanup</h3>
+    <ul class="clean">
+      <li>Add <code>has_many :refresh_tokens, dependent: :delete_all</code> to <b>User</b> (the FK has no cascade).</li>
+      <li>Password policy is length-only (≥8) — consider an opt-in breach/complexity check.</li>
+      <li>Remove the empty <code>test/</code> Minitest tree that sits alongside RSpec.</li>
+      <li>JWT has no <code>iss</code>/<code>aud</code> claims — add when tokens cross services.</li>
+      <li><code>.env.example</code> sets <code>RATE_LIMIT_REQUESTS=10</code> while code defaults to 300 — reconcile the docs.</li>
+      <li>Index <code>refresh_tokens.expires_at</code> (the purge job filters on it) if the table grows.</li>
+    </ul>
+  </section>
+
+  <!-- SECURITY -->
+  <section>
+    <div class="kicker">04 — Security Posture</div>
+    <h2 class="sec prose">Where the template stands</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Area</th><th>Current state</th><th style="white-space:nowrap">Risk</th></tr></thead>
+        <tbody>
+          <tr><td>Broken access control</td><td>Pundit default-deny + enforced authorize/scope checks</td><td class="status-cell g"><span class="dot"></span>Low</td></tr>
+          <tr><td>Token handling</td><td>Refresh stored as SHA-256 digest, raw shown once; rotation + reuse detection</td><td class="status-cell g"><span class="dot"></span>Low</td></tr>
+          <tr><td>File upload</td><td>Type + size validated <em>before</em> commit (no orphan blobs)</td><td class="status-cell g"><span class="dot"></span>Low</td></tr>
+          <tr><td>SQL injection / mass assignment</td><td>Parameterized queries; strong-params allowlists throughout</td><td class="status-cell g"><span class="dot"></span>Low</td></tr>
+          <tr><td>CORS / CSRF</td><td>Fails closed in prod; CSRF intentionally absent (stateless header auth)</td><td class="status-cell g"><span class="dot"></span>Low</td></tr>
+          <tr><td>Secrets &amp; logging</td><td>Encrypted credentials, split prod key; sensitive params filtered from logs</td><td class="status-cell g"><span class="dot"></span>Low</td></tr>
+          <tr><td>Rate limiting</td><td>Global + auth + account scopes present, but untested</td><td class="status-cell w"><span class="dot"></span>Medium</td></tr>
+          <tr><td>Request body size</td><td>Param depth capped; full body-size limit deferred to the proxy</td><td class="status-cell w"><span class="dot"></span>Medium</td></tr>
+          <tr><td>Brute force / enumeration</td><td>Lockable + throttle, but login exposes state/timing oracles</td><td class="status-cell w"><span class="dot"></span>Medium</td></tr>
+          <tr><td>Host header</td><td>Allowlist defaults to permissive when unset in production</td><td class="status-cell m"><span class="dot"></span>High</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- TEST -->
+  <section class="prose">
+    <div class="kicker">05 — Test Coverage</div>
+    <h2 class="sec">Strong suite, a few real gaps</h2>
+    <p>The security suite is the standout: full refresh-token rotation with reuse → family revocation, per-device vs global logout, auto-unlocking lockout, password-reset session kill, and envelope consistency. Authorization is tested at both policy and request level — including "a non-owner cannot update another user" and default-deny for a role-less user. A real N+1 guard runs in CI via Bullet, and an 80% coverage gate plus an OpenAPI drift check block the build.</p>
+    <h3>Highest-risk untested behaviors</h3>
+    <ul class="clean">
+      <li><b>Rate limiting</b> — the spec is skipped; the top gap.</li>
+      <li><b>Mailer rendering</b> — no <code>spec/mailers/</code>; only the enqueue side-effect is asserted.</li>
+      <li><b>Discarded-user login refusal</b> — logic uses <code>User.kept</code> but is unverified end-to-end.</li>
+      <li><b>Avatar presign negatives</b> — only the happy path is covered.</li>
+      <li><b>Confirmation effects</b> — specs assert the envelope, not that <code>confirmed_at</code> is set.</li>
+    </ul>
+  </section>
+
+  <!-- ROADMAP -->
+  <section>
+    <div class="kicker">06 — Refactoring Roadmap</div>
+    <h2 class="sec prose">A phased path to launch</h2>
+
+    <div class="phase">
+      <div class="ph-tag">Phase 1 · Production blockers</div>
+      <h4>Security &amp; data integrity — do these first</h4>
+      <ul>
+        <li><b>H1 · Small</b> — Host authorization fails closed / loud.</li>
+        <li><b>H3 · Small</b> — Fix login enumeration (reorder lock check + dummy bcrypt).</li>
+        <li><b>H2 · Small–Med</b> — Document the token-revocation window; opt-in <code>jti</code> denylist.</li>
+        <li><b>M4 · Small</b> — Un-skip and fix the rate-limit test.</li>
+      </ul>
+    </div>
+    <div class="phase">
+      <div class="ph-tag">Phase 2 · Architecture &amp; consistency</div>
+      <h4>Small correctness and clarity wins</h4>
+      <ul>
+        <li>Add the correlation ID into the error response <em>body</em>, not just the header.</li>
+        <li>Consistent eager loading on single-record serialization (M5).</li>
+        <li>Remove the empty <code>test/</code> tree; add the <code>refresh_tokens</code> association.</li>
+      </ul>
+    </div>
+    <div class="phase">
+      <div class="ph-tag">Phase 3 · Performance &amp; reliability</div>
+      <h4>Ready the template for real resources</h4>
+      <ul>
+        <li><b>M1 · Medium</b> — Allowlisted filtering/sorting via a query object.</li>
+        <li><b>M3 · Small</b> — Job retry/discard + error-reporting defaults.</li>
+        <li>Index <code>refresh_tokens.expires_at</code> for purge at scale.</li>
+      </ul>
+    </div>
+    <div class="phase">
+      <div class="ph-tag">Phase 4 · Developer experience</div>
+      <h4>Close the coverage and docs gaps</h4>
+      <ul>
+        <li>Mailer specs, presign/confirmation negatives, discarded-login spec.</li>
+        <li>README: document the token window, lockout DoS, and required LB body-size cap.</li>
+        <li>A multi-tenancy hook/guide — ready before organizations are introduced.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- SCORECARD -->
+  <section>
+    <div class="kicker">07 — Final Scorecard</div>
+    <h2 class="sec prose">Ratings out of 10</h2>
+    <div class="scorecard">
+      <div class="stat"><div class="label">Architecture</div><div class="val">9<small>/10</small></div><div class="bar"><span style="width:90%"></span></div></div>
+      <div class="stat"><div class="label">Code quality</div><div class="val">9<small>/10</small></div><div class="bar"><span style="width:90%"></span></div></div>
+      <div class="stat"><div class="label">Security</div><div class="val">8<small>/10</small></div><div class="bar"><span style="width:80%"></span></div></div>
+      <div class="stat"><div class="label">API consistency</div><div class="val">9<small>/10</small></div><div class="bar"><span style="width:90%"></span></div></div>
+      <div class="stat"><div class="label">Testability</div><div class="val">8<small>/10</small></div><div class="bar"><span style="width:80%"></span></div></div>
+      <div class="stat"><div class="label">Performance</div><div class="val">8<small>/10</small></div><div class="bar"><span style="width:80%"></span></div></div>
+      <div class="stat"><div class="label">Scalability</div><div class="val">7<small>/10</small></div><div class="bar"><span style="width:70%"></span></div></div>
+      <div class="stat"><div class="label">Deployment</div><div class="val">9<small>/10</small></div><div class="bar"><span style="width:90%"></span></div></div>
+      <div class="stat"><div class="label">Developer experience</div><div class="val">9<small>/10</small></div><div class="bar"><span style="width:90%"></span></div></div>
+      <div class="stat" style="border-color: var(--garnet); box-shadow: 0 0 0 1px var(--garnet), var(--shadow);"><div class="label" style="color:var(--garnet); font-weight:600;">Overall starter quality</div><div class="val" style="color:var(--garnet)">8.5<small>/10</small></div><div class="bar"><span style="width:85%"></span></div></div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <p><b>Verdict — Ready to use, after minor improvements.</b> Adopt this as the standard foundation for new APIs. Resist adding service/form/query layers until a concrete workflow demands them. Before any security-sensitive production launch, complete the four Phase-1 blockers above.</p>
+    <p>Prepared as a full-codebase engineering review · Rails 8.1 API-only starter template · 22 July 2026 · Review only — no project files were modified.</p>
+  </div>
+
+</div>
+</div>

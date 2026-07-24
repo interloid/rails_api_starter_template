@@ -130,8 +130,24 @@ Rails.application.configure do
 
   # Enable DNS rebinding protection and block Host-header injection.
   # Comma-separated allowed hosts (e.g. "api.example.com,www.example.com").
+  # Fails CLOSED: an unset ALLOWED_HOSTS accepts ANY Host header (DNS rebinding /
+  # Host-header injection), so the app refuses to boot unless the operator either lists
+  # the hosts or explicitly opts out via ALLOW_ALL_HOSTS.
   allowed = ENV.fetch("ALLOWED_HOSTS", "").split(",").map(&:strip).reject(&:empty?)
-  config.hosts.concat(allowed) if allowed.any?
+
+  if allowed.any?
+    config.hosts.concat(allowed)
+  elsif ENV["ALLOW_ALL_HOSTS"] == "true"
+    # Explicit opt-out: TLS/host validation is handled upstream (LB, API gateway).
+    # Deferred: Rails.logger isn't wired up yet while this environment file evaluates.
+    config.after_initialize do
+      Rails.logger.warn("[SECURITY] Host authorization disabled via ALLOW_ALL_HOSTS=true")
+    end
+  else
+    raise "ALLOWED_HOSTS must be set in production (comma-separated), or set " \
+          "ALLOW_ALL_HOSTS=true if host validation is handled upstream. " \
+          "Leaving it unset allows any Host header (DNS rebinding risk)."
+  end
   # Always allow health-check probes (load balancers hit these by IP/internal host):
   config.host_authorization = {
     exclude: ->(request) { request.path == "/up" || request.path.start_with?("/health") }

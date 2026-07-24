@@ -93,6 +93,27 @@ RSpec.describe User do
       expect(user.locked_at).to be_nil
       expect(user).not_to be_locked
     end
+
+    it "does not extend an active lock on repeated failures (no indefinite lock)" do
+      user = create(:user, :locked)
+      locked_at = user.locked_at
+      travel_to(5.minutes.from_now) do
+        user.register_failed_attempt!
+        user.register_failed_attempt!
+      end
+      expect(user.reload.locked_at).to eq(locked_at)
+      expect(user.failed_attempts).to eq(User::MAX_FAILED_ATTEMPTS)
+    end
+
+    it "starts a fresh window after the lock expires instead of re-locking immediately" do
+      user = create(:user, :locked)
+      travel_to(User::LOCK_DURATION.from_now + 1.second) do
+        user.register_failed_attempt!
+        expect(user).not_to be_locked
+        expect(user.failed_attempts).to eq(1)
+        expect(user.locked_at).to be_nil
+      end
+    end
   end
 
   describe "Trackable" do

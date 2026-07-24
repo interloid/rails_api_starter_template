@@ -42,13 +42,18 @@ bin/rails credentials:edit --environment production
 | `DATABASE_URL` | `postgres://user:pass@host:5432/dbname` |
 | `SERVICE_NAME` | Log/APM service identifier (`rails_starter_template`) |
 | `APP_HOST` | Public host used to build absolute URLs in emails |
-| `ALLOWED_HOSTS` | Comma-separated Host allowlist (DNS-rebinding protection) |
+| `ALLOWED_HOSTS` | Comma-separated Host allowlist (DNS-rebinding protection). **The app refuses to boot in production if this is unset** — unless `ALLOW_ALL_HOSTS=true`. |
 | `CORS_ORIGINS` | Comma-separated allowed CORS origins |
 | `SOLID_QUEUE_IN_PUMA` | `true` to run background jobs inside Puma |
 | `ACTIVE_STORAGE_SERVICE` | Storage backend (`amazon` for S3) |
 
 **Optional:**
 
+`ALLOW_ALL_HOSTS` (set `true` only when a load balancer / API gateway already validates
+the Host header — it disables Rails' host authorization and logs a warning at boot),
+`JWT_DENYLIST_ENABLED` (set `true` to make logout / password-reset revoke still-valid
+access tokens via a `Rails.cache` denylist, at the cost of one cache read per authenticated
+request; default `false` keeps access tokens stateless),
 `NEW_RELIC_LICENSE_KEY`, `SMTP_ADDRESS`, `SMTP_PORT`, `HEALTH_CHECK_TOKEN`,
 `REQUIRE_EMAIL_CONFIRMATION`, `DEFAULT_USER_ROLE`, `FORCE_SSL`, `RUN_DB_PREPARE`,
 `RATE_LIMIT_REQUESTS`, `RATE_LIMIT_WITHIN_SECONDS`, `SHUTDOWN_SENTINEL_PATH`.
